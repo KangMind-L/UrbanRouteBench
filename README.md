@@ -1,77 +1,61 @@
-好的，下面给你一份**完整、可直接替换 README 的中文版（统一风格 + 已润色 + 适合开源项目/论文仓库）**：
 
 ---
-
-# <h1 align="center">TripPlannerGPT<br>面向真实世界规划的语言代理评测基准</h1>
-
-![TripPlannerGPT](https://img.shields.io/badge/任务-规划-blue)
-![TripPlannerGPT](https://img.shields.io/badge/任务-工具调用-blue)
-![TripPlannerGPT](https://img.shields.io/badge/任务-语言代理-blue)
-![GPT-4](https://img.shields.io/badge/模型-GPT--4-green)
-![LLMs](https://img.shields.io/badge/模型-大语言模型-green)
+# <h1 align="center"RoutePlanner<br>面向真实城市路径规划的语言代理评测基准</h1>
 
 <p align="center">
-    <img src="images/icon.png" width="10%"> <br>
+    <img src="images/xitongEng.png" width="10%"> <br>
 </p>
 
-TripPlannerGPT 是一个用于评估语言代理（Language Agents）在真实世界旅行规划任务中表现的基准框架，重点关注模型在**工具调用（Tool Use）**与**多约束推理（Multi-Constraint Reasoning）**场景下的综合能力。
+TripPlannerGPT 是一个用于评估语言代理（Language Agents）在真实城市路径规划任务中表现的基准框架，重点关注模型在**工具调用（Tool Use）**与**多约束推理（Multi-Constraint Reasoning）**场景下的综合能力。
 
-![Demo Video GIF](images/TravelPlanner.gif)
-
-<p align="center">
-[<a href="https://osu-nlp-group.github.io/TravelPlanner/">项目主页</a>] •
-[<a href="http://arxiv.org/abs/2402.01622">论文</a>] •
-[<a href="https://huggingface.co/datasets/osunlp/TravelPlanner">数据集</a>] •
-[<a href="https://huggingface.co/spaces/osunlp/TravelPlannerLeaderboard">排行榜</a>] •
-[<a href="https://huggingface.co/spaces/osunlp/TravelPlannerEnvironment">环境模拟器</a>]
-</p>
 
 ---
 
 ## 📌 项目概述
 
-TripPlannerGPT 旨在系统性评估语言代理在真实约束条件下生成完整旅行计划的能力。
+RoutePlanner 旨在系统性评估语言代理在真实约束条件下生成完整路径规划的能力。
 
-对于每一个输入查询，模型需要生成**按天组织的旅行行程（day-by-day itinerary）**，包括以下关键要素：
+对于每一个输入查询，模型需要生成**按途经点组织路径**，包括以下关键要素：
 
-* 🚗 交通安排（Transportation）
-* 🍽️ 餐饮安排（Meals）
-* 🏛️ 景点安排（Attractions）
-* 🏨 住宿安排（Accommodation）
+* 🚗 出行方式
+* 🍽️ 途经点
+* 🏛️ 换乘时间
 
 同时，生成的规划必须满足多种现实约束：
 
-* **环境约束（Environment Constraints）**：如天气、时间、地理条件等
-* **常识约束（Commonsense Constraints）**：如合理作息、行程连贯性等
-* **硬约束（Hard Constraints）**：如预算、时间限制、指定偏好等
+* **常识约束（Commonsense Constraints）**：如合理时间、行程连贯性等
+* **硬约束（Hard Constraints）**：如起点、终点、预算、时间限制、指定偏好等
 
 ---
 
 ## ⚙️ 环境配置
 
-### 1. 创建 Conda 环境并安装依赖
+
+### 1. 构建OTP（OpenTripPlanner）路径规划平台
+下载深圳市交通路径路网
+下载深圳市真实交通数据
+
+构建路网
+```bash
+构建路网数据graph.obj
+java -Xmx4G -jar otp-2.5.0-shaded.jar --build --save ./你的路网路径
+加载路网数据
+java -Xmx4G -jar otp-2.5.0-shaded.jar --load ./你的路网路径
+```
+### 2. 创建 Conda 环境并安装依赖
 
 ```bash
-conda create -n tripplannergpt python=3.9
-conda activate tripplannergpt
+conda create -n RoutePlanner python=3.9
+conda activate RoutePlanner
 pip install -r requirements.txt
 ```
 
-### 2. 下载数据库
-
-请下载项目所需数据库，并解压至项目根目录，例如：
-
-```
-your/path/TripPlannerGPT
-```
-
----
 
 ## 🚀 运行方式
 
-### 🧠 两阶段模式（Two-stage Mode）
+### 🧠 两阶段模式
 
-在两阶段模式中，语言代理首先调用工具获取旅行相关信息，然后基于这些信息生成满足用户需求与约束条件的完整规划。
+在两阶段模式中，语言代理首先进行需求理解，然后基于这些信息调用工具满足用户需求与约束条件的完整规划。
 
 ```bash
 export OUTPUT_DIR=path/to/your/output/file
@@ -102,29 +86,7 @@ OUTPUT_DIR/SET_TYPE
 
 ---
 
-### 🧾 单阶段规划模式（Sole-Planning Mode）
 
-该模式不涉及工具调用，直接基于提供的关键信息生成规划，用于评估模型的纯规划能力。
-
-```bash
-export OUTPUT_DIR=path/to/your/output/file
-export MODEL_NAME=MODEL_NAME
-export OPENAI_API_KEY=YOUR_OPENAI_KEY
-export GOOGLE_API_KEY=YOUR_GOOGLE_KEY
-export SET_TYPE=validation
-
-# 可选策略：direct / cot / react / reflexion
-export STRATEGY=direct
-
-cd tools/planner
-python sole_planning.py \
-  --set_type $SET_TYPE \
-  --output_dir $OUTPUT_DIR \
-  --model_name $MODEL_NAME \
-  --strategy $STRATEGY
-```
-
----
 
 ## 🔄 后处理（Postprocess）
 
@@ -200,30 +162,3 @@ python eval.py \
 
 ---
 
-## 📦 数据集加载
-
-```python
-from datasets import load_dataset
-
-# "test" 可替换为 "train" 或 "validation"
-data = load_dataset("osunlp/TravelPlanner", "test")["test"]
-```
-
----
-
-## 📖 引用
-
-如果本项目对你的研究有所帮助，请引用：
-
-```bibtex
-@inproceedings{xie2024travelplanner,
-  title={TravelPlanner: A Benchmark for Real-World Planning with Language Agents},
-  author={Xie, Jian and Zhang, Kai and Chen, Jiangjie and Zhu, Tinghui and Lou, Renze and Tian, Yuandong and Xiao, Yanghua and Su, Yu},
-  booktitle={Forty-first International Conference on Machine Learning},
-  year={2024}
-}
-```
-
----
-
-如果你接下来要**投稿论文 / 做 benchmark 对比 / 写实验部分**，我也可以帮你把这份 README 再压缩成一段**论文中的“Dataset & Benchmark”标准描述**（那种 reviewer 很喜欢的写法）。
