@@ -1,0 +1,1631 @@
+{
+    "requestParameters": {
+        "date": "03-22-2025",
+        "mode": "TRANSIT,WALK",
+        "arriveBy": "false",
+        "wheelchair": "false",
+        "debugItineraryFilter": "OFF",
+        "showIntermediateStops": "true",
+        "fromPlace": "22.59380627148774,113.99767422609243",
+        "toPlace": "22.563074245010444,113.9623922008117",
+        "time": "9:35pm",
+        "locale": "en"
+    },
+    "plan": {
+        "date": 1742650500000,
+        "from": {
+            "name": "Origin",
+            "lon": 113.9976742,
+            "lat": 22.5938063,
+            "vertexType": "NORMAL"
+        },
+        "to": {
+            "name": "Destination",
+            "lon": 113.9623922,
+            "lat": 22.5630742,
+            "vertexType": "NORMAL"
+        },
+        "itineraries": [
+            {
+                "duration": 2930,
+                "startTime": 1742650751000,
+                "endTime": 1742653681000,
+                "walkTime": 1904,
+                "transitTime": 692,
+                "waitingTime": 334,
+                "walkDistance": 2169.81,
+                "walkLimitExceeded": false,
+                "generalizedCost": 5749,
+                "elevationLost": 0.0,
+                "elevationGained": 0.0,
+                "transfers": 1,
+                "fare": {
+                    "fare": {},
+                    "details": {}
+                },
+                "legs": [
+                    {
+                        "startTime": 1742650751000,
+                        "endTime": 1742651166000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 377.91,
+                        "generalizedCost": 698,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "Origin",
+                            "lon": 113.9976742,
+                            "lat": 22.5938063,
+                            "departure": 1742650751000,
+                            "vertexType": "NORMAL"
+                        },
+                        "to": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742651166000,
+                            "departure": 1742651166000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "legGeometry": {
+                            "points": "sy{hCwdxvTDJVv@X~@|AxFBHDLDNSFMDw@XFR@Fp@`CNE",
+                            "length": 15
+                        },
+                        "steps": [
+                            {
+                                "distance": 235.63,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Liuxian Boulevard",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9977284,
+                                "lat": 22.5937054,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 53.98,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Tangkai Road",
+                                "absoluteDirection": "NORTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9956166,
+                                "lat": 22.5928765,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 88.3,
+                                "relativeDirection": "LEFT",
+                                "streetName": "Liuxian Boulevard Side Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9954173,
+                                "lat": 22.5933257,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 415.0
+                    },
+                    {
+                        "startTime": 1742651166000,
+                        "endTime": 1742651512000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 4813.53,
+                        "generalizedCost": 946,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "黄贝岭-赤湾",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:263-1",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2270",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742651166000,
+                            "departure": 1742651166000,
+                            "stopIndex": 15,
+                            "stopSequence": 16,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742651512000,
+                            "departure": 1742651846000,
+                            "stopIndex": 17,
+                            "stopSequence": 18,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "大学城",
+                                "stopId": "2:50",
+                                "lon": 113.9603823,
+                                "lat": 22.5848974,
+                                "arrival": 1742651386000,
+                                "departure": 1742651421000,
+                                "stopIndex": 16,
+                                "stopSequence": 17,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{t{hCqqwvThq@duE??tFnfA",
+                            "length": 4
+                        },
+                        "steps": [],
+                        "routeShortName": "5号线",
+                        "routeLongName": "黄贝岭-赤湾",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742651846000,
+                        "endTime": 1742652192000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 3168.89,
+                        "generalizedCost": 1280,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "西丽湖-太安",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:265-0",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2453",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742651512000,
+                            "departure": 1742651846000,
+                            "stopIndex": 1,
+                            "stopSequence": 2,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742652192000,
+                            "departure": 1742652192000,
+                            "stopIndex": 4,
+                            "stopSequence": 5,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "茶光",
+                                "stopId": "2:146",
+                                "lon": 113.9494089,
+                                "lat": 22.5771182,
+                                "arrival": 1742651917000,
+                                "departure": 1742651957000,
+                                "stopIndex": 2,
+                                "stopSequence": 3,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "珠光",
+                                "stopId": "2:114",
+                                "lon": 113.9556452,
+                                "lat": 22.5712353,
+                                "arrival": 1742652046000,
+                                "departure": 1742652083000,
+                                "stopIndex": 3,
+                                "stopSequence": 4,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{zyhC{snvT|g@{A??vc@_f@??zYcwA",
+                            "length": 6
+                        },
+                        "steps": [],
+                        "routeShortName": "7号线",
+                        "routeLongName": "西丽湖-太安",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742652192000,
+                        "endTime": 1742653681000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 1791.9,
+                        "generalizedCost": 2824,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742652192000,
+                            "departure": 1742652192000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "Destination",
+                            "lon": 113.9623922,
+                            "lat": 22.5630742,
+                            "arrival": 1742653681000,
+                            "vertexType": "NORMAL"
+                        },
+                        "legGeometry": {
+                            "points": "irvhC{urvTFDHOFOh@oAVo@JWbAwB~AeD`@PjFx@fARjANl@HlBRt@J`CZt@D~@B~@LbBb@cAvGaBpJqA|IwAxIQ\\YNYTSTQ\\G`@?^Fd@DtB",
+                            "length": 34
+                        },
+                        "steps": [
+                            {
+                                "distance": 281.22,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Longzhu Boulevard",
+                                "absoluteDirection": "SOUTHEAST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9697131,
+                                "lat": 22.5668948,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 592.49,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Longzhu 5th Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9720614,
+                                "lat": 22.5655949,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 918.2,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "path",
+                                "absoluteDirection": "WEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": true,
+                                "lon": 113.9708539,
+                                "lat": 22.5603996,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 1489.0
+                    }
+                ],
+                "tooSloped": false,
+                "arrivedAtDestinationWithRentedBicycle": false
+            },
+            {
+                "duration": 2690,
+                "startTime": 1742651261000,
+                "endTime": 1742653951000,
+                "walkTime": 1512,
+                "transitTime": 1178,
+                "waitingTime": 0,
+                "walkDistance": 1966.23,
+                "walkLimitExceeded": false,
+                "generalizedCost": 4759,
+                "elevationLost": 0.0,
+                "elevationGained": 0.0,
+                "transfers": 0,
+                "fare": {
+                    "fare": {},
+                    "details": {}
+                },
+                "legs": [
+                    {
+                        "startTime": 1742651261000,
+                        "endTime": 1742651569000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 394.62,
+                        "generalizedCost": 603,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "Origin",
+                            "lon": 113.9976742,
+                            "lat": 22.5938063,
+                            "departure": 1742651261000,
+                            "vertexType": "NORMAL"
+                        },
+                        "to": {
+                            "name": "塘朗地铁站",
+                            "stopId": "1:XBUS_00001747",
+                            "lon": 113.9944826,
+                            "lat": 22.5930612,
+                            "arrival": 1742651569000,
+                            "departure": 1742651569000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "legGeometry": {
+                            "points": "sy{hCwdxvTDJVv@X~@|AxFBHDLDNSFMDw@XGBDPBJx@tCG@",
+                            "length": 16
+                        },
+                        "steps": [
+                            {
+                                "distance": 235.63,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Liuxian Boulevard",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9977284,
+                                "lat": 22.5937054,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 59.06,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Tangkai Road",
+                                "absoluteDirection": "NORTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9956166,
+                                "lat": 22.5928765,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 99.93,
+                                "relativeDirection": "LEFT",
+                                "streetName": "Liuxian Boulevard Side Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9953985,
+                                "lat": 22.593368,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 308.0
+                    },
+                    {
+                        "startTime": 1742651569000,
+                        "endTime": 1742652747000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 5791.27,
+                        "generalizedCost": 1778,
+                        "pathway": false,
+                        "mode": "BUS",
+                        "transitLeg": true,
+                        "route": "中海锦城花园公交总站-阳光科创公交总站",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 3,
+                        "routeId": "1:517",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "1:DTA",
+                        "tripId": "1:75c5715b7cf140e9bd91987fc627e1aa",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "塘朗地铁站",
+                            "stopId": "1:XBUS_00001747",
+                            "lon": 113.9944826,
+                            "lat": 22.5930612,
+                            "arrival": 1742651569000,
+                            "departure": 1742651569000,
+                            "stopIndex": 15,
+                            "stopSequence": 16,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "龙井路口",
+                            "stopId": "1:XBUS_00004759",
+                            "lon": 113.9666369,
+                            "lat": 22.5619411,
+                            "arrival": 1742652747000,
+                            "departure": 1742652747000,
+                            "stopIndex": 20,
+                            "stopSequence": 21,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "塘朗车辆段北",
+                                "stopId": "1:XBUS_00014383",
+                                "lon": 113.9906344,
+                                "lat": 22.5915831,
+                                "arrival": 1742651618000,
+                                "departure": 1742651620000,
+                                "stopIndex": 16,
+                                "stopSequence": 17,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "塘朗山隧道路口",
+                                "stopId": "1:XBUS_00002852",
+                                "lon": 113.9826277,
+                                "lat": 22.5884886,
+                                "arrival": 1742651852000,
+                                "departure": 1742652016000,
+                                "stopIndex": 17,
+                                "stopSequence": 18,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "桃源村东",
+                                "stopId": "1:XBUS_00004984",
+                                "lon": 113.9804458,
+                                "lat": 22.5614429,
+                                "arrival": 1742652306000,
+                                "departure": 1742652308000,
+                                "stopIndex": 18,
+                                "stopSequence": 19,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "桃源村地铁站",
+                                "stopId": "1:XBUS_00016717",
+                                "lon": 113.9770819,
+                                "lat": 22.5628516,
+                                "arrival": 1742652419000,
+                                "departure": 1742652421000,
+                                "stopIndex": 19,
+                                "stopSequence": 20,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "su{hCopwvTfH`W??jR`q@??~gDrL??yG~S??tDh`A",
+                            "length": 10
+                        },
+                        "steps": [],
+                        "routeShortName": "高峰专线150号",
+                        "routeLongName": "中海锦城花园公交总站-阳光科创公交总站",
+                        "duration": 1178.0
+                    },
+                    {
+                        "startTime": 1742652747000,
+                        "endTime": 1742653951000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 1571.61,
+                        "generalizedCost": 2377,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "龙井路口",
+                            "stopId": "1:XBUS_00004759",
+                            "lon": 113.9666369,
+                            "lat": 22.5619411,
+                            "arrival": 1742652747000,
+                            "departure": 1742652747000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "Destination",
+                            "lon": 113.9623922,
+                            "lat": 22.5630742,
+                            "arrival": 1742653951000,
+                            "vertexType": "NORMAL"
+                        },
+                        "legGeometry": {
+                            "points": "csuhCmbrvT??wAWk@KGAICGAFWH[Ry@`AmDJ_@dBuGrAyE@e@~@LbBb@cAvGaBpJqA|IwAxIQ\\YNYTSTQ\\G`@?^Fd@DtB",
+                            "length": 30
+                        },
+                        "steps": [
+                            {
+                                "distance": 90.75,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Longzhu 4th Road",
+                                "absoluteDirection": "NORTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9666373,
+                                "lat": 22.561941,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 468.5,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Longjing Road",
+                                "absoluteDirection": "EAST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9668566,
+                                "lat": 22.5627314,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 94.19,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Longzhu 5th Road",
+                                "absoluteDirection": "SOUTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9711017,
+                                "lat": 22.5612133,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 918.2,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "path",
+                                "absoluteDirection": "WEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": true,
+                                "lon": 113.9708539,
+                                "lat": 22.5603996,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 1204.0
+                    }
+                ],
+                "tooSloped": false,
+                "arrivedAtDestinationWithRentedBicycle": false
+            },
+            {
+                "duration": 2972,
+                "startTime": 1742651405000,
+                "endTime": 1742654377000,
+                "walkTime": 1904,
+                "transitTime": 692,
+                "waitingTime": 376,
+                "walkDistance": 2169.81,
+                "walkLimitExceeded": false,
+                "generalizedCost": 5791,
+                "elevationLost": 0.0,
+                "elevationGained": 0.0,
+                "transfers": 1,
+                "fare": {
+                    "fare": {},
+                    "details": {}
+                },
+                "legs": [
+                    {
+                        "startTime": 1742651405000,
+                        "endTime": 1742651820000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 377.91,
+                        "generalizedCost": 698,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "Origin",
+                            "lon": 113.9976742,
+                            "lat": 22.5938063,
+                            "departure": 1742651405000,
+                            "vertexType": "NORMAL"
+                        },
+                        "to": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742651820000,
+                            "departure": 1742651820000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "legGeometry": {
+                            "points": "sy{hCwdxvTDJVv@X~@|AxFBHDLDNSFMDw@XFR@Fp@`CNE",
+                            "length": 15
+                        },
+                        "steps": [
+                            {
+                                "distance": 235.63,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Liuxian Boulevard",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9977284,
+                                "lat": 22.5937054,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 53.98,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Tangkai Road",
+                                "absoluteDirection": "NORTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9956166,
+                                "lat": 22.5928765,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 88.3,
+                                "relativeDirection": "LEFT",
+                                "streetName": "Liuxian Boulevard Side Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9954173,
+                                "lat": 22.5933257,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 415.0
+                    },
+                    {
+                        "startTime": 1742651820000,
+                        "endTime": 1742652166000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 4813.53,
+                        "generalizedCost": 946,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "黄贝岭-赤湾",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:263-1",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2272",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742651820000,
+                            "departure": 1742651820000,
+                            "stopIndex": 15,
+                            "stopSequence": 16,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742652166000,
+                            "departure": 1742652542000,
+                            "stopIndex": 17,
+                            "stopSequence": 18,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "大学城",
+                                "stopId": "2:50",
+                                "lon": 113.9603823,
+                                "lat": 22.5848974,
+                                "arrival": 1742652040000,
+                                "departure": 1742652075000,
+                                "stopIndex": 16,
+                                "stopSequence": 17,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{t{hCqqwvThq@duE??tFnfA",
+                            "length": 4
+                        },
+                        "steps": [],
+                        "routeShortName": "5号线",
+                        "routeLongName": "黄贝岭-赤湾",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742652542000,
+                        "endTime": 1742652888000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 3168.89,
+                        "generalizedCost": 1322,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "西丽湖-太安",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:265-0",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2455",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742652166000,
+                            "departure": 1742652542000,
+                            "stopIndex": 1,
+                            "stopSequence": 2,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742652888000,
+                            "departure": 1742652888000,
+                            "stopIndex": 4,
+                            "stopSequence": 5,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "茶光",
+                                "stopId": "2:146",
+                                "lon": 113.9494089,
+                                "lat": 22.5771182,
+                                "arrival": 1742652613000,
+                                "departure": 1742652653000,
+                                "stopIndex": 2,
+                                "stopSequence": 3,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "珠光",
+                                "stopId": "2:114",
+                                "lon": 113.9556452,
+                                "lat": 22.5712353,
+                                "arrival": 1742652742000,
+                                "departure": 1742652779000,
+                                "stopIndex": 3,
+                                "stopSequence": 4,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{zyhC{snvT|g@{A??vc@_f@??zYcwA",
+                            "length": 6
+                        },
+                        "steps": [],
+                        "routeShortName": "7号线",
+                        "routeLongName": "西丽湖-太安",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742652888000,
+                        "endTime": 1742654377000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 1791.9,
+                        "generalizedCost": 2824,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742652888000,
+                            "departure": 1742652888000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "Destination",
+                            "lon": 113.9623922,
+                            "lat": 22.5630742,
+                            "arrival": 1742654377000,
+                            "vertexType": "NORMAL"
+                        },
+                        "legGeometry": {
+                            "points": "irvhC{urvTFDHOFOh@oAVo@JWbAwB~AeD`@PjFx@fARjANl@HlBRt@J`CZt@D~@B~@LbBb@cAvGaBpJqA|IwAxIQ\\YNYTSTQ\\G`@?^Fd@DtB",
+                            "length": 34
+                        },
+                        "steps": [
+                            {
+                                "distance": 281.22,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Longzhu Boulevard",
+                                "absoluteDirection": "SOUTHEAST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9697131,
+                                "lat": 22.5668948,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 592.49,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Longzhu 5th Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9720614,
+                                "lat": 22.5655949,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 918.2,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "path",
+                                "absoluteDirection": "WEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": true,
+                                "lon": 113.9708539,
+                                "lat": 22.5603996,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 1489.0
+                    }
+                ],
+                "tooSloped": false,
+                "arrivedAtDestinationWithRentedBicycle": false
+            },
+            {
+                "duration": 2993,
+                "startTime": 1742651732000,
+                "endTime": 1742654725000,
+                "walkTime": 1904,
+                "transitTime": 692,
+                "waitingTime": 397,
+                "walkDistance": 2169.81,
+                "walkLimitExceeded": false,
+                "generalizedCost": 5812,
+                "elevationLost": 0.0,
+                "elevationGained": 0.0,
+                "transfers": 1,
+                "fare": {
+                    "fare": {},
+                    "details": {}
+                },
+                "legs": [
+                    {
+                        "startTime": 1742651732000,
+                        "endTime": 1742652147000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 377.91,
+                        "generalizedCost": 698,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "Origin",
+                            "lon": 113.9976742,
+                            "lat": 22.5938063,
+                            "departure": 1742651732000,
+                            "vertexType": "NORMAL"
+                        },
+                        "to": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742652147000,
+                            "departure": 1742652147000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "legGeometry": {
+                            "points": "sy{hCwdxvTDJVv@X~@|AxFBHDLDNSFMDw@XFR@Fp@`CNE",
+                            "length": 15
+                        },
+                        "steps": [
+                            {
+                                "distance": 235.63,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Liuxian Boulevard",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9977284,
+                                "lat": 22.5937054,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 53.98,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Tangkai Road",
+                                "absoluteDirection": "NORTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9956166,
+                                "lat": 22.5928765,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 88.3,
+                                "relativeDirection": "LEFT",
+                                "streetName": "Liuxian Boulevard Side Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9954173,
+                                "lat": 22.5933257,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 415.0
+                    },
+                    {
+                        "startTime": 1742652147000,
+                        "endTime": 1742652493000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 4813.53,
+                        "generalizedCost": 946,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "黄贝岭-赤湾",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:263-1",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2273",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742652147000,
+                            "departure": 1742652147000,
+                            "stopIndex": 15,
+                            "stopSequence": 16,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742652493000,
+                            "departure": 1742652890000,
+                            "stopIndex": 17,
+                            "stopSequence": 18,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "大学城",
+                                "stopId": "2:50",
+                                "lon": 113.9603823,
+                                "lat": 22.5848974,
+                                "arrival": 1742652367000,
+                                "departure": 1742652402000,
+                                "stopIndex": 16,
+                                "stopSequence": 17,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{t{hCqqwvThq@duE??tFnfA",
+                            "length": 4
+                        },
+                        "steps": [],
+                        "routeShortName": "5号线",
+                        "routeLongName": "黄贝岭-赤湾",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742652890000,
+                        "endTime": 1742653236000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 3168.89,
+                        "generalizedCost": 1343,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "西丽湖-太安",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:265-0",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2456",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742652493000,
+                            "departure": 1742652890000,
+                            "stopIndex": 1,
+                            "stopSequence": 2,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742653236000,
+                            "departure": 1742653236000,
+                            "stopIndex": 4,
+                            "stopSequence": 5,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "茶光",
+                                "stopId": "2:146",
+                                "lon": 113.9494089,
+                                "lat": 22.5771182,
+                                "arrival": 1742652961000,
+                                "departure": 1742653001000,
+                                "stopIndex": 2,
+                                "stopSequence": 3,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "珠光",
+                                "stopId": "2:114",
+                                "lon": 113.9556452,
+                                "lat": 22.5712353,
+                                "arrival": 1742653090000,
+                                "departure": 1742653127000,
+                                "stopIndex": 3,
+                                "stopSequence": 4,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{zyhC{snvT|g@{A??vc@_f@??zYcwA",
+                            "length": 6
+                        },
+                        "steps": [],
+                        "routeShortName": "7号线",
+                        "routeLongName": "西丽湖-太安",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742653236000,
+                        "endTime": 1742654725000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 1791.9,
+                        "generalizedCost": 2824,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742653236000,
+                            "departure": 1742653236000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "Destination",
+                            "lon": 113.9623922,
+                            "lat": 22.5630742,
+                            "arrival": 1742654725000,
+                            "vertexType": "NORMAL"
+                        },
+                        "legGeometry": {
+                            "points": "irvhC{urvTFDHOFOh@oAVo@JWbAwB~AeD`@PjFx@fARjANl@HlBRt@J`CZt@D~@B~@LbBb@cAvGaBpJqA|IwAxIQ\\YNYTSTQ\\G`@?^Fd@DtB",
+                            "length": 34
+                        },
+                        "steps": [
+                            {
+                                "distance": 281.22,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Longzhu Boulevard",
+                                "absoluteDirection": "SOUTHEAST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9697131,
+                                "lat": 22.5668948,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 592.49,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Longzhu 5th Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9720614,
+                                "lat": 22.5655949,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 918.2,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "path",
+                                "absoluteDirection": "WEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": true,
+                                "lon": 113.9708539,
+                                "lat": 22.5603996,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 1489.0
+                    }
+                ],
+                "tooSloped": false,
+                "arrivedAtDestinationWithRentedBicycle": false
+            },
+            {
+                "duration": 3014,
+                "startTime": 1742652059000,
+                "endTime": 1742655073000,
+                "walkTime": 1904,
+                "transitTime": 692,
+                "waitingTime": 418,
+                "walkDistance": 2169.81,
+                "walkLimitExceeded": false,
+                "generalizedCost": 5833,
+                "elevationLost": 0.0,
+                "elevationGained": 0.0,
+                "transfers": 1,
+                "fare": {
+                    "fare": {},
+                    "details": {}
+                },
+                "legs": [
+                    {
+                        "startTime": 1742652059000,
+                        "endTime": 1742652474000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 377.91,
+                        "generalizedCost": 698,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "Origin",
+                            "lon": 113.9976742,
+                            "lat": 22.5938063,
+                            "departure": 1742652059000,
+                            "vertexType": "NORMAL"
+                        },
+                        "to": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742652474000,
+                            "departure": 1742652474000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "legGeometry": {
+                            "points": "sy{hCwdxvTDJVv@X~@|AxFBHDLDNSFMDw@XFR@Fp@`CNE",
+                            "length": 15
+                        },
+                        "steps": [
+                            {
+                                "distance": 235.63,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Liuxian Boulevard",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9977284,
+                                "lat": 22.5937054,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 53.98,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Tangkai Road",
+                                "absoluteDirection": "NORTH",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9956166,
+                                "lat": 22.5928765,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 88.3,
+                                "relativeDirection": "LEFT",
+                                "streetName": "Liuxian Boulevard Side Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9954173,
+                                "lat": 22.5933257,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 415.0
+                    },
+                    {
+                        "startTime": 1742652474000,
+                        "endTime": 1742652820000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 4813.53,
+                        "generalizedCost": 946,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "黄贝岭-赤湾",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:263-1",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2274",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "塘朗",
+                            "stopId": "2:48",
+                            "lon": 113.9946567,
+                            "lat": 22.5929459,
+                            "arrival": 1742652474000,
+                            "departure": 1742652474000,
+                            "stopIndex": 15,
+                            "stopSequence": 16,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742652820000,
+                            "departure": 1742653238000,
+                            "stopIndex": 17,
+                            "stopSequence": 18,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "大学城",
+                                "stopId": "2:50",
+                                "lon": 113.9603823,
+                                "lat": 22.5848974,
+                                "arrival": 1742652694000,
+                                "departure": 1742652729000,
+                                "stopIndex": 16,
+                                "stopSequence": 17,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{t{hCqqwvThq@duE??tFnfA",
+                            "length": 4
+                        },
+                        "steps": [],
+                        "routeShortName": "5号线",
+                        "routeLongName": "黄贝岭-赤湾",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742653238000,
+                        "endTime": 1742653584000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 3168.89,
+                        "generalizedCost": 1364,
+                        "pathway": false,
+                        "mode": "SUBWAY",
+                        "transitLeg": true,
+                        "route": "西丽湖-太安",
+                        "agencyName": "Demo Transit Authority",
+                        "agencyUrl": "http://google.com",
+                        "agencyTimeZoneOffset": 28800000,
+                        "routeType": 1,
+                        "routeId": "2:265-0",
+                        "interlineWithPreviousLeg": false,
+                        "agencyId": "2:DTA",
+                        "tripId": "2:2457",
+                        "serviceDate": "2025-03-22",
+                        "from": {
+                            "name": "西丽",
+                            "stopId": "2:155",
+                            "lon": 113.9489404,
+                            "lat": 22.5836616,
+                            "arrival": 1742652820000,
+                            "departure": 1742653238000,
+                            "stopIndex": 1,
+                            "stopSequence": 2,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742653584000,
+                            "departure": 1742653584000,
+                            "stopIndex": 4,
+                            "stopSequence": 5,
+                            "vertexType": "TRANSIT"
+                        },
+                        "intermediateStops": [
+                            {
+                                "name": "茶光",
+                                "stopId": "2:146",
+                                "lon": 113.9494089,
+                                "lat": 22.5771182,
+                                "arrival": 1742653309000,
+                                "departure": 1742653349000,
+                                "stopIndex": 2,
+                                "stopSequence": 3,
+                                "vertexType": "TRANSIT"
+                            },
+                            {
+                                "name": "珠光",
+                                "stopId": "2:114",
+                                "lon": 113.9556452,
+                                "lat": 22.5712353,
+                                "arrival": 1742653438000,
+                                "departure": 1742653475000,
+                                "stopIndex": 3,
+                                "stopSequence": 4,
+                                "vertexType": "TRANSIT"
+                            }
+                        ],
+                        "legGeometry": {
+                            "points": "{zyhC{snvT|g@{A??vc@_f@??zYcwA",
+                            "length": 6
+                        },
+                        "steps": [],
+                        "routeShortName": "7号线",
+                        "routeLongName": "西丽湖-太安",
+                        "duration": 346.0
+                    },
+                    {
+                        "startTime": 1742653584000,
+                        "endTime": 1742655073000,
+                        "departureDelay": 0,
+                        "arrivalDelay": 0,
+                        "realTime": false,
+                        "distance": 1791.9,
+                        "generalizedCost": 2824,
+                        "pathway": false,
+                        "mode": "WALK",
+                        "transitLeg": false,
+                        "route": "",
+                        "agencyTimeZoneOffset": 28800000,
+                        "interlineWithPreviousLeg": false,
+                        "from": {
+                            "name": "龙井",
+                            "stopId": "2:178",
+                            "lon": 113.9697421,
+                            "lat": 22.566937,
+                            "arrival": 1742653584000,
+                            "departure": 1742653584000,
+                            "vertexType": "TRANSIT"
+                        },
+                        "to": {
+                            "name": "Destination",
+                            "lon": 113.9623922,
+                            "lat": 22.5630742,
+                            "arrival": 1742655073000,
+                            "vertexType": "NORMAL"
+                        },
+                        "legGeometry": {
+                            "points": "irvhC{urvTFDHOFOh@oAVo@JWbAwB~AeD`@PjFx@fARjANl@HlBRt@J`CZt@D~@B~@LbBb@cAvGaBpJqA|IwAxIQ\\YNYTSTQ\\G`@?^Fd@DtB",
+                            "length": 34
+                        },
+                        "steps": [
+                            {
+                                "distance": 281.22,
+                                "relativeDirection": "DEPART",
+                                "streetName": "Longzhu Boulevard",
+                                "absoluteDirection": "SOUTHEAST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9697131,
+                                "lat": 22.5668948,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 592.49,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "Longzhu 5th Road",
+                                "absoluteDirection": "SOUTHWEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": false,
+                                "lon": 113.9720614,
+                                "lat": 22.5655949,
+                                "elevation": "",
+                                "walkingBike": false
+                            },
+                            {
+                                "distance": 918.2,
+                                "relativeDirection": "RIGHT",
+                                "streetName": "path",
+                                "absoluteDirection": "WEST",
+                                "stayOn": false,
+                                "area": false,
+                                "bogusName": true,
+                                "lon": 113.9708539,
+                                "lat": 22.5603996,
+                                "elevation": "",
+                                "walkingBike": false
+                            }
+                        ],
+                        "rentedBike": false,
+                        "walkingBike": false,
+                        "duration": 1489.0
+                    }
+                ],
+                "tooSloped": false,
+                "arrivedAtDestinationWithRentedBicycle": false
+            }
+        ]
+    },
+    "metadata": {
+        "searchWindowUsed": 3600,
+        "nextDateTime": 1742652060000,
+        "prevDateTime": 1742646900000
+    },
+    "previousPageCursor": "MXxQUkVWSU9VU19QQUdFfDIwMjUtMDMtMjJUMTI6NTU6MDBafHw0MG18U1RSRUVUX0FORF9BUlJJVkFMX1RJTUV8ZmFsc2V8MjAyNS0wMy0yMlQxNDowMDo1OVp8MjAyNS0wMy0yMlQxNDo1MToxM1p8MXw1ODMzfA==",
+    "nextPageCursor": "MXxORVhUX1BBR0V8MjAyNS0wMy0yMlQxNDowNjoyNlp8fDQwbXxTVFJFRVRfQU5EX0FSUklWQUxfVElNRXxmYWxzZXwyMDI1LTAzLTIyVDE0OjAwOjU5WnwyMDI1LTAzLTIyVDE0OjUxOjEzWnwxfDU4MzN8",
+    "debugOutput": {
+        "precalculationTime": 103800,
+        "directStreetRouterTime": 30886500,
+        "transitRouterTime": 130755800,
+        "filteringTime": 3365300,
+        "renderingTime": 3087400,
+        "totalTime": 138970100,
+        "transitRouterTimes": {
+            "tripPatternFilterTime": 32183900,
+            "accessEgressTime": 4591500,
+            "raptorSearchTime": 84547400,
+            "itineraryCreationTime": 9133100
+        }
+    },
+    "elevationMetadata": {
+        "ellipsoidToGeoidDifference": -2.9162430011661407,
+        "geoidElevation": false
+    }
+}
