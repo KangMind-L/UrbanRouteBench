@@ -11,16 +11,15 @@ from func_timeout import func_set_timeout
 import json
 from datasets import load_dataset
 import pandas as pd
-# DEEPSEEK_API_URL = "https://api.deepseek.com/v1"
-# DEEPSEEK_API_KEY = "sk-3f923be31588465eb1c7642ad3b50241"  # Replace with your actual DeepSeek API key
-openai.api_base = "https://api.shredder.money/v1"
+
+openai.api_base = ""
 
 T = TypeVar('T')
 # KEY_INDEX = 0
 # KEY_POOL =  [
 #    os.environ['OPENAI_API_KEY']
 # ]# your key pool
-openai.api_key = "sk-2MmXP8X9pmtqWR7HPXH2ZxWAsr72PnQ2FUoBt4FB0lAY5xs2"
+openai.api_key = ""
 
 class TimeoutError(Exception):
     pass
