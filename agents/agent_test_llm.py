@@ -41,23 +41,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"  # 强制使用 GPU 0
 
 # 设置显存优化 (重要！)
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 强制使用 GPU 0
-# OPENAI_API_KEY = "sk-Qoz7oXQEaT586P3ywtIe5IoRWgZ4NGcxRYAKljcrzZNMPKep"
-# GOOGLE_API_KEY = "0"
-# DEEPSEEK_API_KEY = "sk-9a737cbf09a84c78bcb8403b5c374e66"
-# 魔塔 qwen480，
-# "sk-jEnWQN0y0EgIi21lwONLKR5tD5f9Fbsyk6vY8SmwCiHMXztE"
-# iflow deepseek3.2  qwen3-max zhipu 4.6 qwen3-32b
-# sk-2MmXP8X9pmtqWR7HPXH2ZxWAsr72PnQ2FUoBt4FB0lAY5xs2
-# nvidia分组  V3.2
-# 1bzBQsxqUJuTBChw71Ib1ZTPBlGEzkniXZKC3r373BbXtoK9
 
-# 默认分组 gpt "gemini-2.5-pro",
-# sk-mXIoQJ7Y7ojULM9pb6uy8yFbZTwlUjHVLNvJQB1cBsk77KFX
 # OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
 # GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 # DEEPSEEK_API_KEY = os.environ['DEEPSEEK_API_KEY']
-SHREDDER_API_KEY = "sk-2MmXP8X9pmtqWR7HPXH2ZxWAsr72PnQ2FUoBt4FB0lAY5xs2"
-SHREDDER_URL = "https://api.shredder.money/v1"
+SHREDDER_API_KEY = ""
+SHREDDER_URL = ""
 pd.options.display.max_info_columns = 200
 os.environ['TIKTOKEN_CACHE_DIR'] = './tmp'
 #TODO 工具映射转换
