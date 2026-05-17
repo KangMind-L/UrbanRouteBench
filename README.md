@@ -1,7 +1,7 @@
 # <h1 align="center">RoutePlanner：<br>Benchmark for Evaluating Language Agents on Real-World Urban Route Planning</h1>
 
 <p align="center">
-    <img src="frame.pdf" width="90%"> <br>
+    <iframe src="frame.pdf" width="90%" height="600"></iframe>
 </p>
 
 RoutePlanner is a benchmark framework for evaluating how language agents perform on real-world urban route planning tasks, with a particular focus on their combined capability in **tool use** and **multi-constraint reasoning**.
