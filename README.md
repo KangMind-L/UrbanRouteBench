@@ -1,63 +1,75 @@
-
----
-# <h1 align="center">RoutePlanner<br>面向真实城市路径规划的语言代理评测基准</h1>
+# <h1 align="center">RoutePlanner<br>Benchmark for Evaluating Language Agents on Real-World Urban Route Planning</h1>
 
 <p align="center">
     <img src="image/xitongEng.png" width="90%"> <br>
 </p>
 
-RoutePlanner 是一个用于评估语言代理（Language Agents）在真实城市路径规划任务中表现的基准框架，重点关注模型在**工具调用（Tool Use）**与**多约束推理（Multi-Constraint Reasoning）**场景下的综合能力。
-
-
----
-
-## 📌 项目概述
-
-RoutePlanner 旨在系统性评估语言代理在真实约束条件下生成完整路径规划的能力。
-
-对于每一个输入查询，模型需要生成**按路径点生成合理路径**，包括以下关键要素：
-
-* 🚗 出行方式
-* 🍽️ 途经点
-* 🏛️ 换乘时间
-
-同时，生成的规划必须满足多种现实约束：
-
-* **常识约束**：如合理时间、行程连贯性等
-* **硬约束**：如起点、终点、预算、时间限制、指定偏好等
-* **隐式约束**：如老人等换乘个体需步行少的路径
+RoutePlanner is a benchmark framework for evaluating how language agents perform on real-world urban route planning tasks, with a particular focus on their combined capability in **tool use** and **multi-constraint reasoning**.
 
 ---
 
-## ⚙️ 环境配置
+## Project Overview
 
+RoutePlanner is designed to systematically evaluate whether language agents can generate complete travel plans under realistic constraints.
 
-### 1. 构建OTP（OpenTripPlanner）路径规划平台
-构建完整OTP所需要文件有以下组成：
+For each input query, the model is expected to generate a **reasonable route organized by waypoints**, including the following key elements:
+
+* Travel mode
+* Intermediate stops or pass-through points
+* Transfer timing
+
+At the same time, the generated plan must satisfy multiple kinds of real-world constraints:
+
+* **Common-sense constraints**: such as reasonable timing and coherent trip structure
+* **Hard constraints**: such as origin, destination, budget, time limits, and stated preferences
+* **Implicit constraints**: such as minimizing walking for elderly travelers or similar user-specific needs
+
+---
+
+## Key Features
+
+* Evaluates route planning in a realistic city setting rather than simplified synthetic tasks
+* Tests both planning quality and the agent's ability to call external tools effectively
+* Covers explicit, implicit, and common-sense constraints within a single benchmark
+* Supports a complete workflow including generation, post-processing, and evaluation
+* Organizes outputs into intermediate and final artifacts for reproducible analysis
+
+---
+
+## Environment Setup
+
+### 1. Build the OTP (OpenTripPlanner) routing platform
+
+The following files are required to build a complete OTP environment:
+
 ```bash
-otp-2.5.0-shaded.jar  OTP jar包
-overpass_sz.osm.pbf   深圳市交通路网
-subway_gtfs.zip  new_Gtfs.zip 此处交通数据必须为gtfs.zip结尾
+otp-2.5.0-shaded.jar   # OTP JAR package
+overpass_sz.osm.pbf      # Shenzhen road network
+subway_gtfs.zip
+new_Gtfs.zip             # Transit data files must end with gtfs.zip
 ```
-我们通过处理深圳市的真实交通数据，按照GTFS标准进行构建，并通过GTFS官网进行验证
 
-官网下载[OTP项目](https://github.com/opentripplanner/OpenTripPlanner),选择2.5.0版本
+We build the routing graph from real transportation data in Shenzhen, convert the transit feeds to the GTFS standard, and validate them using GTFS tooling.
 
-下载[深圳市交通路径路网](此处放路网链接) 
+Download the official [OpenTripPlanner project](https://github.com/opentripplanner/OpenTripPlanner) and use version `2.5.0`.
 
-下载[深圳市真实交通数据](此处放路网链接) 
+Download the Shenzhen road network data: add the source link here.
 
-构建路网
+Download the Shenzhen public transit data: add the source link here.
+
+Build and load the graph:
+
 ```bash
-构建路网数据graph.obj
-java -Xmx4G -jar otp-2.5.0-shaded.jar --build --save ./你的路网路径
-加载路网数据
-java -Xmx4G -jar otp-2.5.0-shaded.jar --load ./你的路网路径
+# Build graph.obj from the routing data
+java -Xmx4G -jar otp-2.5.0-shaded.jar --build --save ./your_graph_directory
+
+# Load the graph
+java -Xmx4G -jar otp-2.5.0-shaded.jar --load ./your_graph_directory
 ```
-此时OTP成功加载，输入localhost:8080 即可查询路径
 
+If OTP starts successfully, open `http://localhost:8080` to query routes.
 
-### 2. 创建 Conda 环境并安装依赖
+### 2. Create the Conda environment and install dependencies
 
 ```bash
 conda create -n RoutePlanner python=3.9
@@ -65,23 +77,48 @@ conda activate RoutePlanner
 pip install -r requirements.txt
 ```
 
+Current Python dependencies listed in `requirements.txt` include `langchain`, `pandas`, `tiktoken`, `openai`, `langchain_google_genai`, `gradio`, `datasets`, and `func_timeout`.
 
-## 🚀 运行方式
+---
 
-### 🧠 两阶段运行方式
+## Repository Structure
 
-在两阶段模式中，语言代理首先进行需求理解，然后基于这些信息调用工具满足用户需求与约束条件的完整规划。
+A high-level view of the main directories:
+
+```text
+RoutePlanner/
+├── agents/          # Agent execution entry points and planning logic
+├── postprocess/     # Parse natural-language plans into structured outputs
+├── evaluation/      # Evaluation scripts for validation and analysis
+├── database/        # Data resources used by the planner pipeline
+├── tools/           # Routing and utility tool modules
+├── utils/           # Shared helper functions
+├── frontend/        # Frontend-related code
+├── finetune/        # Fine-tuning related assets and experiments
+├── image/           # Figures used in the documentation
+├── test-V5/         # Experimental files and outputs for V5
+└── test-V6/         # Experimental files and outputs for V6
+```
+
+The repository also contains multiple historical preprocessing and output directories, which appear to preserve intermediate experiment versions.
+
+---
+
+## Running the Pipeline
+
+### Two-stage execution
+
+In the two-stage setting, the language agent first interprets the request and then calls tools to produce a complete plan that satisfies the user requirements and constraints.
 
 ```bash
 export OUTPUT_DIR=path/to/your/output/file
 
-# 示例：gpt-3.5-turbo-X, gpt-4-1106-preview, gemini, mistral-7B-32K, mixtral
+# Example values: gpt-3.5-turbo-X, gpt-4-1106-preview, gemini, mistral-7B-32K, mixtral
 export MODEL_NAME=MODEL_NAME
 
 export OPENAI_API_KEY=YOUR_OPENAI_KEY
 
-
-# 可选：validation 或 test
+# Optional: validation or test
 export SET_TYPE=validation
 
 cd agents
@@ -91,19 +128,26 @@ python tool_agents.py \
   --model_name $MODEL_NAME
 ```
 
-输出结果保存在：
+The generated outputs are stored in:
 
-```
+```text
 OUTPUT_DIR/SET_TYPE
 ```
 
+### Alternative entry points
+
+The repository contains more than one runnable agent script. Based on the current codebase, the most relevant entry points include:
+
+* `agents/tool_agents.py`
+* `agents/app.py`
+
+For the documented benchmark workflow, `agents/tool_agents.py` is the primary script already used in the existing README commands.
+
 ---
 
+## Post-processing
 
-
-## 🔄 后处理（Postprocess）
-
-该步骤用于将自然语言生成的旅行规划解析为结构化 JSON，并整合为最终评估文件。
+This stage parses the generated natural-language travel plan into structured JSON and combines the intermediate results into the final evaluation file.
 
 ```bash
 export OUTPUT_DIR=path/to/your/output/file
@@ -112,7 +156,7 @@ export OPENAI_API_KEY=YOUR_OPENAI_KEY
 export SET_TYPE=validation
 export STRATEGY=direct
 
-# 模式：two-stage 或 sole-planning
+# Mode: two-stage or sole-planning
 export MODE=two-stage
 
 export TMP_DIR=path/to/tmp/parsed/plan/file
@@ -145,11 +189,21 @@ python combination.py \
   --submission_file_dir $SUBMISSION_DIR
 ```
 
+### Expected artifacts
+
+After post-processing, you should expect several layers of artifacts:
+
+* Raw model outputs generated by the agent
+* Parsed intermediate files stored in `TMP_DIR`
+* Combined structured files prepared for evaluation or submission
+
+Keeping these artifacts separated makes it easier to debug formatting issues, extraction failures, and evaluation mismatches.
+
 ---
 
-## 📊 评估（Evaluation）
+## Evaluation
 
-使用本地验证集进行评估：
+Use the local validation set for evaluation:
 
 ```bash
 export SET_TYPE=validation
@@ -161,16 +215,62 @@ python eval.py \
   --evaluation_file_path $EVALUATION_FILE_PATH
 ```
 
+### Evaluation goal
 
+The evaluation stage measures whether the generated route satisfies the benchmark requirements in a structured and reproducible way. In practice, this means checking whether the model output can be converted into the expected format and whether the planned route respects the intended constraints.
+
+---
+
+## Data and Experiment Files
+
+The repository currently includes multiple experiment artifacts, especially under `test-V6/`, such as:
+
+* Validation and training CSV files
+* Generated evaluation spreadsheets
+* Distribution plots in PNG and PDF formats
+* Intermediate route tables and JSON-enriched outputs
+
+These files are useful for benchmarking analysis, result inspection, and plotting dataset statistics, but they are not all required for the minimal execution pipeline described above.
 
 ---
 
-## ⚠️ 注意事项
+## Recommended Workflow
 
-本基准旨在提供公平、可复现的评测环境，请严格遵守以下规范：
+For a clean benchmark run, the practical workflow is:
 
-1. 不得通过反向推断数据集构造规则来优化模型表现
-2. 不得在 Prompt 中硬编码与 Benchmark 强相关的信息
-3. 不得采用仅针对本基准、缺乏泛化能力的人工策略
+1. Prepare and validate the OTP routing backend.
+2. Create the Python environment and install dependencies.
+3. Run the agent script to generate route plans.
+4. Post-process the natural-language outputs into structured JSON-like artifacts.
+5. Run the evaluation script on the resulting file.
+6. Inspect intermediate outputs if parsing or evaluation errors occur.
 
 ---
+
+## Notes and Constraints
+
+This benchmark is intended to provide a fair and reproducible evaluation environment. Please strictly follow these rules:
+
+1. Do not optimize model performance by reverse-engineering the dataset construction rules.
+2. Do not hard-code benchmark-specific information into prompts.
+3. Do not rely on handcrafted strategies that only work for this benchmark and do not generalize.
+
+---
+
+## Reproducibility Tips
+
+* Keep the OTP version fixed at `2.5.0` unless you intentionally study version differences.
+* Record the exact model name, prompting strategy, and dataset split for every run.
+* Save raw outputs before post-processing so parsing changes do not destroy the original generations.
+* Store evaluation files separately for `validation` and `test` runs to avoid accidental mixing.
+
+---
+
+## Pending Documentation Items
+
+A few source links are still placeholders in the current project materials and should be filled in when available:
+
+* Shenzhen road network download link
+* Shenzhen public transit data download link
+
+Until those links are added, users will need to prepare the corresponding routing and GTFS resources manually.
