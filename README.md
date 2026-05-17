@@ -1,4 +1,4 @@
-# <h1 align="center">RoutePlanner<br>Benchmark for Evaluating Language Agents on Real-World Urban Route Planning</h1>
+# <h1 align="center">RoutePlanner：<br>Benchmark for Evaluating Language Agents on Real-World Urban Route Planning</h1>
 
 <p align="center">
     <img src="image/xitongEng.png" width="90%"> <br>
