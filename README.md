@@ -1,7 +1,7 @@
-# <h1 align="center">RoutePlanner：<br>Benchmark for Evaluating Language Agents on Real-World Urban Route Planning</h1>
+# <h1 align="center">RoutePlanner<br>Benchmark for Evaluating Language Agents on Real-World Urban Route Planning</h1>
 
 <p align="center">
-    <img src="frame.png" width="90%"> <br>
+    <img src="image/xitongEng.png" width="90%"> <br>
 </p>
 
 RoutePlanner is a benchmark framework for evaluating how language agents perform on real-world urban route planning tasks, with a particular focus on their combined capability in **tool use** and **multi-constraint reasoning**.
@@ -88,6 +88,7 @@ A high-level view of the main directories:
 ```text
 RoutePlanner/
 ├── agents/          # Agent execution entry points and planning logic
+├── preprocess/    # Data generation and preprocessing scripts
 ├── postprocess/     # Parse natural-language plans into structured outputs
 ├── evaluation/      # Evaluation scripts for validation and analysis
 ├── database/        # Data resources used by the planner pipeline
@@ -95,20 +96,54 @@ RoutePlanner/
 ├── utils/           # Shared helper functions
 ├── frontend/        # Frontend-related code
 ├── finetune/        # Fine-tuning related assets and experiments
-├── image/           # Figures used in the documentation
-├── test-V5/         # Experimental files and outputs for V5
-└── test-V6/         # Experimental files and outputs for V6
 ```
 
-The repository also contains multiple historical preprocessing and output directories, which appear to preserve intermediate experiment versions.
 
 ---
 
+## Data Generation Stage
+
+Before agent evaluation , the repository also supports a data generation stage for constructing route-planning instructions and tool-execution traces.
+
+In the current codebase, this stage is mainly implemented in `preprocess`:
+
+* `preprocess/query_generate.py`: generates or rewrites natural-language route-planning queries from structured inputs
+* `preprocess/generated_plan.py`: converts structured route records into step-by-step tool plans such as `Wgs84Search`, `RouteSearch`, `RouteRanking`, and `Planner`
+
+Conceptually, the stage can be viewed as a three-step pipeline:
+
+1. Start from structured travel records or benchmark annotations.
+2. Generate user-facing natural-language queries and corresponding executable planning traces.
+
+
+Typical artifacts produced in this stage include:
+
+* Query CSV files containing generated user requests
+* Intermediate CSV files containing structured plans or execution steps
+* Final JSONL files such as `finetune/dataset.jsonl` for training
+
+This stage is not required for simply running the benchmark on the released validation or test split, but it is useful when you want to:
+
+* reproduce the data construction workflow,
+* build additional supervised fine-tuning data, or
+* inspect how natural-language route queries are aligned with tool-level planning trajectories.
+
+### Example workflow
+
+The exact input file names in the scripts are currently hard-coded, so you may need to adjust paths before running them. A typical workflow is:
+
+```bash
+cd preprocess
+python query_generate.py
+python generated_plan.py
+
+```
+
 ## Running the Pipeline
 
-### Two-stage execution
+### End-to-End Execution
 
-In the two-stage setting, the language agent first interprets the request and then calls tools to produce a complete plan that satisfies the user requirements and constraints.
+In end-to-end execution, the language agent first extracts parameters and then invokes tools to generate a comprehensive plan that satisfies the user's requirements and constraints.
 
 ```bash
 export OUTPUT_DIR=path/to/your/output/file
@@ -126,6 +161,8 @@ python tool_agents.py \
   --set_type $SET_TYPE \
   --output_dir $OUTPUT_DIR \
   --model_name $MODEL_NAME
+
+The planning phase proceeds as described above; however, `set_type` is set to `args`, allowing for the direct reading of raw parameters. This ensures that planning is executed only after semantic correctness has been fully verified.
 ```
 
 The generated outputs are stored in:
@@ -221,18 +258,7 @@ The evaluation stage measures whether the generated route satisfies the benchmar
 
 ---
 
-## Data and Experiment Files
 
-The repository currently includes multiple experiment artifacts, especially under `test-V6/`, such as:
-
-* Validation and training CSV files
-* Generated evaluation spreadsheets
-* Distribution plots in PNG and PDF formats
-* Intermediate route tables and JSON-enriched outputs
-
-These files are useful for benchmarking analysis, result inspection, and plotting dataset statistics, but they are not all required for the minimal execution pipeline described above.
-
----
 
 ## Recommended Workflow
 
@@ -256,21 +282,3 @@ This benchmark is intended to provide a fair and reproducible evaluation environ
 3. Do not rely on handcrafted strategies that only work for this benchmark and do not generalize.
 
 ---
-
-## Reproducibility Tips
-
-* Keep the OTP version fixed at `2.5.0` unless you intentionally study version differences.
-* Record the exact model name, prompting strategy, and dataset split for every run.
-* Save raw outputs before post-processing so parsing changes do not destroy the original generations.
-* Store evaluation files separately for `validation` and `test` runs to avoid accidental mixing.
-
----
-
-## Pending Documentation Items
-
-A few source links are still placeholders in the current project materials and should be filled in when available:
-
-* Shenzhen road network download link
-* Shenzhen public transit data download link
-
-Until those links are added, users will need to prepare the corresponding routing and GTFS resources manually.
