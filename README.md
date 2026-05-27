@@ -1,16 +1,17 @@
-# <h1 align="center"UrbanRouteBench: <br>A Benchmark for Natural-Language Urban Multimodal Route Planning</h1>
+# <h1 align="center">UrbanRouteBench:<br>A Benchmark for Natural-Language Urban Multimodal Route Planning</h1>
+
 
 <p align="center">
-    <img src="image/frame.png" width="90%"> <br>
+    <img src="frame.png" width="90%"> <br>
 </p>
 
-RoutePlanner is a benchmark framework for evaluating how language agents perform on real-world urban route planning tasks, with a particular focus on their combined capability in **tool use** and **multi-constraint reasoning**.
+UrbanRouteBench is a benchmark framework for evaluating how language agents perform on real-world urban route planning tasks, with a particular focus on their combined capability in **tool use** and **multi-constraint reasoning**.
 
 ---
 
 ## Project Overview
 
-RoutePlanner is designed to systematically evaluate whether language agents can generate complete travel plans under realistic constraints.
+ is designed to systematically evaluate whether language agents can generate complete travel plans under realistic constraints.
 
 For each input query, the model is expected to generate a **reasonable route organized by waypoints**, including the following key elements:
 
@@ -53,9 +54,9 @@ We build the routing graph from real transportation data in Shenzhen, convert th
 
 Download the official [OpenTripPlanner project](https://github.com/opentripplanner/OpenTripPlanner) and use version `2.5.0`.
 
-Download the Shenzhen road network data: add the source link here.
+Download the [Shenzhen road network data](https://huggingface.co/datasets/peng905/sz_osm)
 
-Download the Shenzhen public transit data: add the source link here.
+Download the [Shenzhen public transit data](https://huggingface.co/datasets/peng905/sz_osm)
 
 Build and load the graph:
 
@@ -72,8 +73,8 @@ If OTP starts successfully, open `http://localhost:8080` to query routes.
 ### 2. Create the Conda environment and install dependencies
 
 ```bash
-conda create -n RoutePlanner python=3.9
-conda activate RoutePlanner
+conda create -n UrbanRouteBench python=3.9
+conda activate UrbanRouteBench
 pip install -r requirements.txt
 ```
 
@@ -86,7 +87,7 @@ Current Python dependencies listed in `requirements.txt` include `langchain`, `p
 A high-level view of the main directories:
 
 ```text
-RoutePlanner/
+RoutePUrbanRouteBenchlanner/
 ├── agents/          # Agent execution entry points and planning logic
 ├── preprocess/    # Data generation and preprocessing scripts
 ├── postprocess/     # Parse natural-language plans into structured outputs
