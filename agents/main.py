@@ -46,8 +46,8 @@ SYSTEM_PROMPT = """
 # -----------------------------
 # API 配置
 # -----------------------------
-API_URL = "https://api.shredder.money/v1/chat/completions"
-API_KEY = "sk-Qoz7oXQEaT586P3ywtIe5IoRWgZ4NGcxRYAKljcrzZNMPKep"
+API_URL = 
+API_KEY = 
 
 # -----------------------------
 # 调用模型生成回复
