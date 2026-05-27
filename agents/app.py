@@ -44,7 +44,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 强制使用 GPU 0
 # DEEPSEEK_API_KEY = os.environ['DEEPSEEK_API_KEY']
 OPENAI_API_KEY = "0"
 GOOGLE_API_KEY = "0"
-DEEPSEEK_API_KEY = "sk-9a737cbf09a84c78bcb8403b5c374e66"
+DEEPSEEK_API_KEY =
 pd.options.display.max_info_columns = 200
 os.environ['TIKTOKEN_CACHE_DIR'] = './tmp'
 #TODO 工具映射转换
@@ -119,7 +119,7 @@ class ReactAgent:
             self.llm = ChatOpenAI(temperature=0.7,  # 可以调整temperature
                     max_tokens=256,
                     model_name=react_llm_name,
-                    openai_api_key='sk-9a737cbf09a84c78bcb8403b5c374e66',  # 使用DeepSeek的API Key
+                    openai_api_key=,  # 使用DeepSeek的API Key
                     base_url="https://api.deepseek.com/v1",  # 指定DeepSeek的API端点
                     model_kwargs={"stop": stop_list})   
             
