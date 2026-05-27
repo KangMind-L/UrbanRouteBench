@@ -51,27 +51,14 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"  # 强制使用 GPU 0
 # GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 # DEEPSEEK_API_KEY = os.environ['DEEPSEEK_API_KEY']
 
-# chat-completions
-#sk-35FfaisxpT0NLMny3EyRX8FI3qvcTsTHPRc04MrCptehzE2S
-# OPENAI_API_KEY = "sk-Qoz7oXQEaT586P3ywtIe5IoRWgZ4NGcxRYAKljcrzZNMPKep"
-# GOOGLE_API_KEY = "0"
-# DEEPSEEK_API_KEY = "sk-9a737cbf09a84c78bcb8403b5c374e66"
-# 魔塔 qwen480，
-# "sk-jEnWQN0y0EgIi21lwONLKR5tD5f9Fbsyk6vY8SmwCiHMXztE"
-# iflow deepseek3.2  qwen3-max zhipu 4.7 qwen3-32bW
-# sk-2MmXP8X9pmtqWR7HPXH2ZxWAsr72PnQ2FUoBt4FB0lAY5xs2
-# nvidia分组  V3.2
-# 1bzBQsxqUJuTBChw71Ib1ZTPBlGEzkniXZKC3r373BbXtoK9
 
-# 默认分组 gpt "gemini-2.5-pro", kimi
-# sk-sk-mXIoQJ7Y7ojULM9pb6uy8yFbZTwlUjHVLNvJQB1cBsk77KFX
 pd.options.display.max_info_columns = 200
 os.environ['TIKTOKEN_CACHE_DIR'] = './tmp'
 #TODO 工具映射转换
 actionMapping = {"RouteSearch":"routes","Wgs84Search":"wgs84","RouteRank":"ranking","Planner":"planner","NotebookWrite":"notebook"}
 
-SHREDDER_API_KEY = "sk-mXIoQJ7Y7ojULM9pb6uy8yFbZTwlUjHVLNvJQB1cBsk77KFX"
-SHREDDER_URL = "https://api.shredder.money/v1"
+SHREDDER_API_KEY = 
+SHREDDER_URL = 
 def catch_openai_api_error():
     print("API请求失败，正在重试。。。。。。")
     # time.sleep(120)
