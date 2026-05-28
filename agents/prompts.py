@@ -2,47 +2,45 @@ from langchain.prompts import PromptTemplate
 import json
 import math
 
-JSON_GENERATE_2 = """你将收到一个自然语言的出行问题，请严格按照以下规则解析为JSON：
-1. "起点"：出发地。
-2. "终点"：目的地。
-3. "途经点数量" 和 "途经点"：如果有途经点，则写数量并用 "-" 连接顺序；没有则数量为0，。
-4. "时间"：提到的时间（24小时制，格式"HH:MM"）。
-5. "时间性质"：如果表述是"在某时间之前到达目的地"，写 "到达"；否则是 "出发"。
-6. "出行方式"：提到的交通方式（只包含公交车、地铁、公共交通、开车、打车、单车+公共交通和空值null这7种情况），存在多种交通方式可以用"|"连接，"单车+公共交通"是一个整体，不需要拆分。公共交通是包含地铁和公交车的，需求中没有提到出行方式的时候，一定不能自己填充出行方式。
-7. 约束条件：
-  - "出行偏好"：如 "费用最低"、"换乘最少"、"步行最少"、"时间最少"，"最早出发"."最早到达"."最晚出发"."最晚到达","步行最少|时间最少"，存在多种约束情况，用"-"分隔，没提则写 ""空值，一定不能超出这八种偏好范围，禁止构造新的偏好。
-  - "环境约束"：如果有环境类描述（只存在：携带大件行李、下雨、打雷三种情况），写入，否则写入空值""null
-  - "个体约束"：如果有个体约束（只包含孕妇、残疾人、老人、小孩四种情况），写入，否则写入空值""null
-  - "预算"：提到的数字金额
+JSON_GENERATE_2 = """You will receive a natural-language travel request. Parse it into JSON strictly following these rules:
+1. "origin": departure place.
+2. "destination": destination.
+3. "num_via_points" and "via_points": if there are via points, write the count and connect them in order with "-"; otherwise use 0 and null.
+4. "time": the mentioned time in 24-hour format "HH:MM".
+5. "time_type": if the request means "arrive before a certain time", write "arrival"; otherwise write "departure".
+6. "travel_mode": only these values are allowed: bus, subway, public_transit, drive, taxi, bike+public_transit, or null. If multiple modes are explicitly mentioned, join them with "|". "bike+public_transit" is one single value. "public_transit" includes subway and bus. If the user did not mention a mode, do not invent one.
+7. "constraints":
+  - "travel_preference": only from this closed set: lowest_cost, fewest_transfers, least_walking, shortest_time, earliest_departure, earliest_arrival, latest_departure, latest_arrival. If multiple preferences exist, connect them with "-". If not mentioned, use an empty value. Do not create any new preference.
+  - "environment_constraint": only from large_luggage, rain, thunder; otherwise null.
+  - "personal_constraint": only from pregnant, disabled, elderly, child; otherwise null.
+  - "cost": the mentioned numeric amount.
 
-以下是几个示例：
+Examples:
 
-***** 示例1 *****
-问题：
-我需要从深圳市上屋小学开车前往洪田工业区，中午12点16分出发。我是一名孕妇，还携带大件行李，请帮我规划一条安全舒适的驾车路线，费用最好控制在10元以内。
+***** Example 1 *****
+Question:
+I need to drive from Shangwu Primary School, Shenzhen to Hongtian Industrial Zone and leave at 12:16 noon. I am pregnant and carrying large luggage. Please plan a safe and comfortable driving route, and keep the cost within 10 yuan.
 JSON:
-{{"起点": "深圳市上屋小学",  "途经点数量": 0, "途经点": null,"终点": "洪田工业区", "时间": "12:16", "时间性质": "出发", "出行方式": "开车",  "约束条件": {{"出行偏好": null,"环境约束": "携带大件行李", "个体约束": "孕妇", "费用": 10.0}}}}
+{{"origin": "Shangwu Primary School, Shenzhen", "num_via_points": 0, "via_points": null, "destination": "Hongtian Industrial Zone", "time": "12:16", "time_type": "departure", "travel_mode": "drive", "constraints": {{"travel_preference": null, "environment_constraint": "large_luggage", "personal_constraint": "pregnant", "cost": 10.0}}}}
 
-***** 示例2 *****
-问题：
-我带着小孩从马坜老二村乘坐公共交通前往东华格林第二幼儿园。需要在晚上6点59分之前到达，希望选择换乘最少、最晚出发的方案，费用控制在4元以内。
+***** Example 2 *****
+Question:
+I am traveling with a child from Mali Laoer Village to Donghua Green Second Kindergarten by public transit. We must arrive before 18:59 and prefer the option with the fewest transfers and the latest feasible departure. Keep the cost within 4 yuan.
 JSON:
-{{"起点": "马坜老二村", "途经点数量": 0, "途经点": null,  "终点": "东华格林第二幼儿园","时间": "18:59","时间性质": "到达","出行方式": "公共交通", "约束条件": {{"出行偏好": "换乘最少", "环境约束": null, "个体约束": "小孩","费用": 4.0}}}}
+{{"origin": "Mali Laoer Village", "num_via_points": 0, "via_points": null, "destination": "Donghua Green Second Kindergarten", "time": "18:59", "time_type": "arrival", "travel_mode": "public_transit", "constraints": {{"travel_preference": "fewest_transfers", "environment_constraint": null, "personal_constraint": "child", "cost": 4.0}}}}
 
-***** 示例3 *****
-问题：
-我要从荣村小区骑单车转乘公共交通前往汉京·九榕台，下午5点53分出发。希望规划时间最少、最早到达的路线方案，总费用不超过6元。
+***** Example 3 *****
+Question:
+I want to ride a bike and then transfer to public transit from Rongcun Community to Hanjing Jiurongtai, leaving at 17:53. I want the fastest route and the earliest arrival, with total cost no more than 6 yuan.
 JSON:
-{{"起点": "荣村小区", "途经点数量": 0, "途经点": null,  "终点": "汉京·九榕台","时间": "17:53", "时间性质": "出发", "出行方式": "公共交通", "约束条件": {{"出行偏好": "时间最短", "环境约束": null, "个体约束": null, "费用": 6.0}}}}
+{{"origin": "Rongcun Community", "num_via_points": 0, "via_points": null, "destination": "Hanjing Jiurongtai", "time": "17:53", "time_type": "departure", "travel_mode": "bike+public_transit", "constraints": {{"travel_preference": "shortest_time", "environment_constraint": null, "personal_constraint": null, "cost": 6.0}}}}
 
-*
-***** 示例结束 *****
+***** End of Examples *****
 
-请把下面的问题解析为JSON：不会出现null和上述描述中没出现过的出行方式、环境描述、个体描述。单车和公共交通这种要描述成为（单车+公共交通）,没有提到出行方式的话就默认为null
-一定不能自己写提到的出行方式，不能自己推断出，要依据需求中提到的出行方式，不能自己填充出行方式。不管其他因素
-请直接输出 JSON 字符串本身，不要使用工具调用，不要使用函数调用，不要输出除 JSON 以外的任何内容。
+Now parse the following question into JSON. Do not output any unexpected travel mode, environment description, or personal constraint. Expressions like "bike and public transit" must be normalized to "bike+public_transit". If no travel mode is mentioned, use null. Never infer or fill in a travel mode that is not explicitly stated in the request.
+Output the JSON string only. Do not use tool calls, function calls, code fences, or any extra text.
 
-问题：{query}
+Question: {query}
 JSON:
 """
 json_generate_prompt_2 = PromptTemplate(
@@ -50,81 +48,55 @@ json_generate_prompt_2 = PromptTemplate(
     template=JSON_GENERATE_2,
 )
 
+JSON_GENERATE_3 = """You will receive a natural-language travel request. Parse it into JSON strictly according to these rules.
 
+Fields:
+1. "origin": departure place.
+2. "destination": destination.
+3. "num_via_points" and "via_points": if there are via points, write the count and list them in order; otherwise use 0 and null.
+4. "stay_duration": fill only if the request explicitly says to stay at a via point for at least X minutes; otherwise null.
+5. "departure_time": explicit departure time in 24-hour format "HH:MM"; otherwise null.
+6. "time_window": if the request explicitly says the total duration must be within X minutes, write X; otherwise null.
+7. "travel_mode": only bus, subway, taxi, bike, or null. Join multiple explicit modes with "|".
+   If no mode is explicitly mentioned, infer conservatively from constraints:
+   - elderly / child / disabled: cannot choose drive or bike.
+   - pregnant: cannot choose bike.
+   - if there is an environmental constraint, cannot choose bike.
+   - if both personal and environmental constraints exist and no mode is specified, write null.
+8. "constraints":
+   - "travel_preference": only shortest_time, lowest_cost, fewest_transfers, least_walking, joined with "|" when needed.
+     Treat natural variants accordingly, for example:
+     cheapest / lowest cost -> lowest_cost
+     as few transfers as possible / direct if possible -> fewest_transfers
+     as fast as possible -> shortest_time
+     walk as little as possible -> least_walking
+     A hard budget cap alone does not mean lowest_cost.
+     If no preference is mentioned but personal or environmental constraints exist, you may infer least_walking|fewest_transfers. Otherwise write null.
+   - "environment_constraint": only rain, heavy_rain, bad_weather, large_luggage; otherwise null.
+   - "personal_constraint": only elderly, child, pregnant, disabled; otherwise null.
+   - "cost": numeric upper budget if explicitly mentioned; otherwise null.
 
-
-
-JSON_GENERATE_3 = """你将收到一个自然语言的出行问题，请严格按照以下规则解析为 JSON：
-
-========================
-字段说明（必须完全一致）
-========================
-1. "起点"：出发地。
-2. "终点"：目的地。
-3. "途经点数量" 和 "途经点"：
-   - 如果有途经点，写数量，并按顺序填写地点名称
-   - 如果没有，数量为 0，途经点写 null
-4. "停留时间"：
-   - 仅当明确提到“在途经点停留、游玩、或者其他形式至少 X 分钟”时填写（单位：分钟）
-   - 未提及写 null
-5. "出发时间"：
-   - 问题中明确出现具体出发时间时填写（24 小时制 "HH:MM"）
-   - 不可能没有出发时间
-6. "时间窗口"：
-   - 若明确出现“总时长控制在 X 分钟内”，填写 X
-   - 未提及则写 0
-7. "出行方式"：
-   - 只允许以下 6 种或 null：
-     公交车、地铁、公共交通、打车、开车、单车+公共交通
-   - 多种方式用 "|" 连接
-   - 仅当问题中明确提到时填写
-   - 若完全未提及出行方式，写 null
-   - 禁止自行推断或补充出行方式
-8. "约束条件"：
-   - "出行偏好"：
-     只允许以下 8 种：
-     最早出发、最晚出发、最早到达、最晚到达、
-     时间最少、费用最低、换乘最少、步行最少
-     可为 0–2 个，用 "-" 连接
-     未提及写空字符串 ""
-   - "环境约束"：
-     只允许：下雨、打雷、携带大件行李
-     未提及写 null
-   - "个体约束"：
-     只允许：老人、小孩、孕妇、残疾人
-     未提及写 null
-   - "费用"：
-     明确提到金额上限时填写数字
-     未提及写 null
-
-========================
-示例
-========================
-
-***** 示例1 *****
-问题：
-我需要从坑梓基地前往安居南馨苑，我想12:31出发，希望整体用时尽量短、换乘次数少一些。出行方式上不限定具体形式，优先考虑公共交通方案，费用最好控制在10元以内。
+Example 1:
+Question:
+I need to travel from Kengzi Base to Anju Nanxinyuan. I want to leave at 12:31, keep travel time short, and reduce transfers. I do not require a specific mode, but public transit is preferred. Keep the cost within 10 yuan.
 JSON:
-{{"起点":"坑梓基地","途经点数量":0,"途经点":null,"停留时间":null,"终点":"安居南馨苑","出发时间":12:31,"时间窗口":0,"出行方式":"公交车|地铁|公共交通|打车|单车+公共交通","约束条件":{{"出行偏好":"时间最少-换乘最少","环境约束":null,"个体约束":null,"费用":10}}}}
+{{"origin":"Kengzi Base","num_via_points":0,"via_points":null,"stay_duration":null,"destination":"Anju Nanxinyuan","departure_time":"12:31","time_window":0,"travel_mode":"bus|subway","constraints":{{"travel_preference":"shortest_time|fewest_transfers","environment_constraint":null,"personal_constraint":null,"cost":10}}}}
 
-***** 示例2 *****
-问题：
-我计划15:36从新安中学(集团)燕川中学出发，先前往庙溪一市场，并在那边至少停留15分钟，之后再前往劲嘉彩印。全程希望控制在85分钟以内，可以选择开车或打车。由于下雨且是孕期出行，希望路线尽量简单、换乘少一些，并在满足最晚到达要求的情况下，费用不超过28元。
+Example 2:
+Question:
+I plan to leave Xin'an Middle School Yanchuan Campus at 15:36, go to Miaoxi First Market first, stay there for at least 15 minutes, and then continue to Jinjia Color Printing. The whole trip should stay within 85 minutes. Because it is raining and I am pregnant, please plan the fastest feasible route. Budget: no more than 28 yuan.
 JSON:
-{{"起点":"新安中学(集团)燕川中学","途经点数量":1,"途经点":"庙溪一市场","停留时间":15,"终点":"劲嘉彩印","出发时间":15:36,"时间窗口":85,"出行方式":"开车|打车","约束条件":{{"出行偏好":"换乘最少-最晚到达","环境约束":"下雨","个体约束":"孕妇","费用":28}}}}
+{{"origin":"Xin'an Middle School Yanchuan Campus","num_via_points":1,"via_points":"Miaoxi First Market","stay_duration":15,"destination":"Jinjia Color Printing","departure_time":"15:36","time_window":85,"travel_mode":"bus|subway|taxi","constraints":{{"travel_preference":"shortest_time","environment_constraint":"rain","personal_constraint":"pregnant","cost":28}}}}
 
-========================
-输出要求（非常重要）
-========================
-- 只输出 JSON 字符串本身
-- 不要解释
-- 不要输出多余文本
-- 不要使用代码块
-- 不要使用工具或函数调用
-- 禁止推断问题中未出现的信息
+Output requirements:
+- Output the JSON string only.
+- No explanation.
+- No extra text.
+- No code fences.
+- No tool or function calls.
 
-问题：{query}
-JSON：
+Question: {query}
+JSON:
 """
 
 json_generate_prompt_3 = PromptTemplate(
@@ -132,37 +104,33 @@ json_generate_prompt_3 = PromptTemplate(
     template=JSON_GENERATE_3,
 )
 
-JSON_GENERATE = """你将收到一个自然语言的出行问题，请严格按照以下规则解析为JSON：
-1. "起点"：出发地。
-2. "终点"：目的地。
-3. "途经点数量" 和 "途经点"：如果有途经点，则写数量并用 "-->" 连接顺序；没有则数量为0，顺序为None。
-4. "时间"：提到的时间（24小时制，格式"HH:MM"）。
-6. "约束条件"：
-   - "出行方式"：提到的交通方式（只包含公交车、地铁、公交+地铁、开车、打车和None这6种情况）。
-   - "优先级策略"：如 "费用最低"、"换乘最少"、"距离最短"、"时间最短"，没提则写 None,不能写为null或""。
-   - "预算"：提到的数字金额；没提则写 None。
-   - "时间性质"：如果表述是"在某时间之前到达目的地"，写 "到达"；否则是 "出发"。
-   - "环境限制"：如果有环境类描述（只存在携带大件行李、大雨、打雷三种情况），写入，否则写 None,不能写为null或""。
-   - "个体限制"：如果有个体条件（只包含孕妇、残疾人、老人、小孩四种情况），写入，否则写 None,不能写为null或""。
+JSON_GENERATE = """You will receive a natural-language travel request. Parse it into JSON strictly following these rules:
+1. "origin": departure place.
+2. "destination": destination.
+3. "num_via_points" and "via_points": if via points exist, write the count and connect them with "-->"; otherwise use 0 and None.
+4. "time": the mentioned time in 24-hour format "HH:MM".
+5. "constraints":
+   - "travel_mode": only bus, subway, bus+subway, drive, taxi, or None.
+   - "travel_preference": only values such as lowest_cost, fewest_transfers, shortest_distance, shortest_time; if not mentioned, write None.
+   - "budget": mentioned amount; otherwise None.
+   - "time_type": if the request means arriving before a given time, write "arrival"; otherwise write "departure".
+   - "environment_limit": only large_luggage, heavy_rain, thunder; otherwise None.
+   - "personal_limit": only pregnant, disabled, elderly, child; otherwise None.
 
-以下是几个示例：
-
-***** 示例1 *****
-问题：
-我中午12点50要带着大件行李从宝坪路口打车去观湖松元厦，中途需要在库坑中心区停一下，车费预算大概是110。
+Example 1:
+Question:
+At 12:50 noon I need to take a taxi from Baoping Intersection to Guanhu Songyuanxia with large luggage, and I need to stop by Kukeng Central Area on the way. My budget is about 110.
 JSON:
-{{"起点": "宝坪路口", "终点": "观湖松元厦", "途经点数量": 1, "途经点": "库坑中心区", "时间": "12:50", "约束条件": {{"出行方式": "打车", "优先级策略": None, "预算": 110.0, "时间性质": "出发", "环境限制": "携带大件行李", "个体限制": None}}}}
+{{"origin": "Baoping Intersection", "destination": "Guanhu Songyuanxia", "num_via_points": 1, "via_points": "Kukeng Central Area", "time": "12:50", "constraints": {{"travel_mode": "taxi", "travel_preference": None, "budget": 110.0, "time_type": "departure", "environment_limit": "large_luggage", "personal_limit": None}}}}
 
-***** 示例 2*****
-问题：
-我现在怀孕了不太方便，早上9点48要从骏丰业大厦坐公交去大运那边，能不能找条不用转车或者转车少的路线？
+Example 2:
+Question:
+I am pregnant and it is inconvenient for me right now. At 09:48 in the morning I need to take a bus from Junfengye Building to Dayun. Can you find a route with no transfer or as few transfers as possible?
 JSON:
-{{"起点": "骏丰业大厦", "终点": "大运", "途经点数量": 0, "途经点": "None", "时间": "09:48", "约束条件": {{"出行方式": "公交车", "优先级策略": "换乘最少", "预算": 0, "时间性质": "出发", "环境限制": None, "个体限制": "孕妇"}}}}
+{{"origin": "Junfengye Building", "destination": "Dayun", "num_via_points": 0, "via_points": "None", "time": "09:48", "constraints": {{"travel_mode": "bus", "travel_preference": "fewest_transfers", "budget": 0, "time_type": "departure", "environment_limit": None, "personal_limit": "pregnant"}}}}
 
-***** 示例结束 *****
-
-请把下面的问题解析为JSON：不会出现null和上述描述中没出现过的出行方式、环境描述、个体描述。公交交通描述需要替换成为（公交+地铁）,没有提到出行方式的话就默认为None
-问题：{query}
+Parse the following question into JSON. Do not output null or any travel mode, environment description, or personal constraint outside the allowed set. Normalize public-transit wording to "bus+subway". If no travel mode is mentioned, default to None.
+Question: {query}
 JSON:
 """
 
@@ -171,43 +139,17 @@ json_generate_prompt = PromptTemplate(
     template=JSON_GENERATE,
 )
 
+QUERY_GENERATE = """You will receive a JSON object. Generate one natural-language travel query from it.
+Meaning of fields:
+- "origin": departure place
+- "destination": destination
+- "num_via_points": number of via points
+- "via_point_order": ordered via points
+- "time": 24-hour time
+- "arrive_by" in constraints: true means the user must arrive before the given time; false means the time is the departure time
+- If there is a via point, the request must clearly state that the user will stay there for at least 30 minutes.
+Follow the example style closely. The final output should be a realistic route-planning request, without irrelevant explanation.
 
-
-QUERY_GENERATE = """给你一个JSON数据，请帮我生成一个自然语言查询语句。在该JSON中"起点"代表出发地点，"终点"代表目的地，"途经点数量"代表途经点的数量，"途经点顺序"代表途经点的顺序，请注意，时间为24小时的格式。约束条件"到达"为true时，代表要在给定的时间之前到达目的地，为false时，说明时间为起点的出发时间，这些信息都来自于JSON数据，遇到途经点，必须要在途经点待半小时以上，你必须严格遵循示例中给出的格式，最终的问题就是查询出行的路径，不需要有太多无关的说明。以下是5个示例。
-***** 示例1 *****
-JSON:
-{{"起点": "西乡佳华总站", "终点": "茜坑老村", "途经点数量": 0, "途经点顺序": "", "时间": "23:30", "出行人数": 3, "约束条件": {{"出行方式": "CAR", "优先级策略": None, "预算": 33, "到达": "true"}}}}
-QUERY:
-我们3个人要从西乡佳华总站开车前往茜坑老村参加聚会。希望能规划一条最直接的路线，确保能够在晚上11点半之前到达，油费最好控制在33元以内。
-***** 示例2 *****
-JSON:
-{{"起点": "圳美美食街", "终点": "金沙湾", "途经点数量": 1, "途经点顺序": "三村路口", "时间": "23:30", "出行人数": 3, "约束条件": {{"出行方式": "BUS", "优先级策略": "费用最低", "预算": 28, "到达": "true"}}}}
-QUERY:
-我们3个人要在晚上11点半之前到达金沙湾。从圳美美食街乘坐公交车出发途中需要在三村路口办点事，停留半小时以上。因为是夜间出行且预算有限（不超过28元），希望能提供费用最低的公交方案，确保我们能准时到达目的地。
-***** 示例3 *****
-JSON:
-{{"起点": "宝安中心站", "终点": "桥塘路中", "途经点数量": 3, "途经点顺序": "西头新村->南头检查站（关外）02->松坪山总站", "时间": "16:35", "出行人数": 4, "约束条件": {{"出行方式": "SUBWAY", "优先级策略": "换乘最少", "预算": 64, "到达": "false"}}}}
-QUERY:
-我们4个人要在下午16点35分从宝安中心站乘坐地铁前往桥塘路中，中途需要在3个地方停留：先到西头新村办点事，然后去南头检查站（关外）02接人，最后到松坪山总站取些东西。因为是深夜出行且带着物品，希望能提供换乘最少的地铁方案，车费控制在64元以内，请帮我规划一条合理的路线方案。
-***** 示例4 *****
-JSON:
-{{"起点": "明德学校南门", "终点": "和平里花园二期", "途经点数量": 0, "途经点顺序": "", "时间": "9:22", "出行人数": 3, "约束条件": {{"出行方式": "None", "优先级策略": None, "预算": 12, "到达": "true"}}}}
-QUERY:
-我们3个人计划在上午9点22分到达平里花园二期，从明德学校南门出发，不需要经过任何途经点，希望路线能避开早高峰拥堵路段，总费用预算控制在12元以内。不需要赶时间，请推荐一条合理的路线。
-
-***** ***** 示例5 *****
-JSON:
-{{"起点": "马鞍山信用社", "终点": "沙井民营党工委", "途经点数量": 0, "途经点顺序": "", "时间": "23:22", "出行人数": 1, "约束条件": {{"出行方式": "CAR_PICKUP", "优先级策略": "换乘最少", "预算": 39, "到达": "true"}}}}
-QUERY:
-我要从马鞍山信用社打车前往沙井民营党工委参加一个紧急会议。就我一个人，希望能规划换乘最少（直达）的路线，车费最好控制在39元以内，必须晚上11点22分之前到达。
-
-***** ***** 示例6 *****
-JSON：{{'起点': '大梅沙公交总站', '终点': '汤坑横坪路口', '途经点数量': 3, '途经点顺序': '水湾地铁站->清风大道锦龙二路路口->研祥北门', '时间': '16:15', '出行人数': 4, '约束条件': {{"出行方式": "BUS", "优先级策略": "距离最短", "预算": 132, "到达": "true"}}}}
-QUERY:
-我们4个人要在下午16:15前到达汤坑横坪路口。从大梅沙公交总站乘坐公交出发，途中需要依次在水湾地铁站停留半小时以上办事，然后在清风大道锦龙二路路口停留半小时以上接人，最后在研祥北门停留半小时以上取东西。因为是多人携带物品出行，请规划一条总距离最短的公交路线方案，要求总费用不超过132元。
-
-***** 示例结束 *****
-请根据以下JSON数据生成自然语言查询语句：
 JSON:{json}
 QUERY:
 """
@@ -216,51 +158,21 @@ query_generate_prompt = PromptTemplate(
                         template=QUERY_GENERATE,
                         )
 
-#每个问题生成5个不同的提问形式
-QUERY_GENERATE_1 = """给你一个JSON数据和SCRATCHPAD数据，请按照生成问题的5种不同格式给我生成不同的问题，每一次生成一个问题。在该JSON中"起点"代表出发地点，"终点"代表目的地，"途经点数量"代表途经点的数量，"途经点顺序"代表途经点的顺序，请注意，时间为24小时的格式。约束条件"到达"为true时，代表要在给定的时间之前到达目的地，为false时，说明时间为起点的出发时间，这些信息都来自于JSON数据，遇到途经点，必须要在途经点待半小时以上，你必须严格遵循示例中给出的格式，最终的问题就是查询出行的路径，不需要有太多无关的说明。SCRATCHPAD中是保存的生成过的问题，在每一次生成问题时请排除SCRATCHPAD中生成过的类型。以下是2个示例。
-1. 完全保留原始示例的JSON数据和问题内容
-2. 生成的5种表述不得改变原意和约束条件
-3. 时间、预算等数字必须精确对应
-4. 途经点必须注明停留≥30分钟
-[五种提问风格明确定义]
-1. 标准提问式：完整规范的表达，使用正式用语，包含所有必要细节，用于正式场合。
-   - 特征：使用"请"、"希望"等礼貌用语，完整句子，结构清晰。
+# Generate five different phrasings for each question.
+QUERY_GENERATE_1 = """You will receive a JSON object and a SCRATCHPAD. Generate one route-planning query each time, using one of 5 styles, and avoid styles already used in the SCRATCHPAD.
+Rules:
+1. Keep the original meaning and constraints unchanged.
+2. Time, budget, and counts must remain exact.
+3. If a via point exists, explicitly mention staying there for at least 30 minutes.
+4. Generate exactly one query each time.
 
-2. 紧急需求式：强调时间紧迫性和重要性，使用感叹号和紧迫性词汇。
-   - 特征：包含"紧急！""必须""尽快"等词汇，多用感叹号，句子简短有力。
+Five styles:
+1. Standard: complete, polite, formal.
+2. Urgent: emphasizes urgency and importance.
+3. Casual: natural and conversational.
+4. Detailed requirements: clearly lists the requirements.
+5. Concise command: compressed, instruction-like wording.
 
-3. 休闲出行式：轻松随意的日常用语，像朋友间对话般自然。
-   - 特征：使用"嗨""嘿"等开头，口语化表达，可能有语气词。
-
-4. 详细要求式：分条列举所有需求点，结构清晰明确。
-   - 特征：使用"需求："或"出行要求："开头，分点列出各项约束。
-
-5. 简洁指令式：简短直接的指令式表达，只包含核心信息。
-   - 特征：使用动词开头，省略修饰语，信息高度浓缩。
-
-***** 示例1 *****
-JSON:
-{{"起点": "西乡佳华总站", "终点": "茜坑老村", "途经点数量": 0, "途经点顺序": "", "时间": "23:30", "出行人数": 3, "约束条件": {{"出行方式": "CAR", "优先级策略": None, "预算": 33, "到达": "true"}}}}
-QUERY：
-1. 标准提问式: 我们3个人要从西乡佳华总站开车前往茜坑老村参加聚会。希望能规划一条最直接的路线，确保能够在晚上11点半之前到达，油费最好控制在33元以内。
-2. 紧急需求式: 急！我们3人必须23:30前赶到茜坑老村，从西乡佳华总站自驾出发，求最快路线！油费不能超过33元！
-3. 休闲出行式: 嗨，我们三个朋友想开车从西乡佳华总站去茜坑老村玩，晚上11点半前到就行，油费别超过33块，有什么好路线推荐吗？
-4. 详细要求式: 需求：3人自驾，起点西乡佳华总站，终点茜坑老村，无途经点，必须在23:30前到达。要求：路线最直接，油费不超过33元，请提供详细行车方案。
-5. 简洁指令式: 规划路线：3人自驾，西乡佳华总站→茜坑老村，23:30前到，油费≤33元。
-
-***** 示例2 *****
-JSON:
-{{"起点": "圳美美食街", "终点": "金沙湾", "途经点数量": 1, "途经点顺序": "三村路口", "时间": "23:30", "出行人数": 3, "约束条件": {{"出行方式": "BUS", "优先级策略": "费用最低", "预算": 28, "到达": "true"}}}}
-QUERY：
-1. 标准提问式: 我们3个人要在晚上11点半之前到达金沙湾。从圳美美食街乘坐公交车出发途中需要在三村路口办点事，停留半小时以上。因为是夜间出行且预算有限（不超过28元），希望能提供费用最低的公交方案，确保我们能准时到达目的地。
-2. 紧急需求式: 紧急！3人夜间出行，圳美美食街→三村路口(停留30分钟)→金沙湾，23:30前必须到！求最便宜公交方案，预算仅28元！
-3. 休闲出行式: 嘿，我们仨打算从圳美美食街坐公交去金沙湾玩，中途要在三村路口停半小时办点事，晚上11点半前到就行。钱不多(28块以内)，有啥便宜的公交路线呀？
-4. 详细要求式: 出行需求：3人公交出行，起点圳美美食街，途经三村路口(停留≥30分钟)，终点金沙湾，23:30前到达。特别要求：夜间出行，选择费用最低的公交方案，总预算不超过28元。
-5. 简洁指令式: 公交路线：圳美美食街→三村路口(停30min)→金沙湾，3人，23:30前到，费用≤28元，选最便宜方案。
-
-
-***** 示例结束 *****
-请为以下JSON生成5种以上的表述（保持原意不变），一定要生成5种：
 JSON:{json}
 SCRATCHPAD:{scratchpad}
 QUERY:
@@ -269,35 +181,19 @@ query_generate_prompt_1 = PromptTemplate(
                         input_variables=["json",'scratchpad'],
                         template=QUERY_GENERATE_1,
                         )
-#每个问题生成3个不同的提问形式
-QUERY_GENERATE_2 = """给你一个JSON数据和SCRATCHPAD数据，请按照生成问题的3种不同格式给我生成不同的问题，每一次生成一个问题。在该JSON中"起点"代表出发地点，"终点"代表目的地，"途经点数量"代表途经点的数量，"途经点顺序"代表途经点的顺序，请注意，时间为24小时的格式。约束条件"到达"为true时，代表要在给定的时间之前到达目的地，为false时，说明时间为起点的出发时间，这些信息都来自于JSON数据，遇到途经点，必须要在途经点待半小时以上，你必须严格遵循示例中给出的格式，最终的问题就是查询出行的路径，不需要有太多无关的说明。SCRATCHPAD中是保存的生成过的问题，在每一次生成问题时请排除SCRATCHPAD中生成过的类型。以下是3个示例。
-1. 完全保留原始示例的JSON数据和问题内容
-2. 生成的3种表述不得改变原意和约束条件
-3. 时间、预算等数字必须精确对应
-4. 途经点必须注明停留一段时间做具体的事，10-60分钟，不需要具体，只需要一个模糊的时间大小，比如加油、购物、吃饭、接人、游玩等。具体情况根据途经点的性质决定
-***** 示例1 *****
-JSON:
-{{'起点': '沙井京基百纳', '终点': '春园路口', '途经点数量': 1, '途经点顺序': '怀德翠岗', '时间': '11:30', '出行人数': 3, '约束条件': '{{""出行方式"": ""CAR_PICKUP"", ""优先级策略"": ""None"", ""预算"": 114, ""到达"": ""false""}}'}}
-QUERY：
-1. 直接请求型: 请规划一条从沙井京基百纳到春园路口的打车路线，中途要去怀德翠岗接1个人，出发时间11:30，3人同行，预算不超过114元。
-2. 问题提问型: 我们3人11:30从沙井京基百纳打车，中途需在怀德翠岗停接个人，最后到春园路口，车费能控制在114元以内吗？
-3. 简洁描述型: 起点：沙井京基百纳，终点：春园路口，途经点：怀德翠岗，出发时间：11:30，出行人数：3，预算：114元
-***** 示例2 *****
-JSON:
-{{'起点': '阳光科创公交总站', '终点': '华悦村', '途经点数量': 0, '途经点顺序': '', '时间': '9:15', '出行人数': 5, '约束条件': '{{""出行方式"": ""CAR"", ""优先级策略"": ""None"", ""预算"": 32, ""到达"": ""false""}}'}}
-QUERY：
-1. 直接请求型: 请规划一条从阳光科创公交总站到华悦村的驾车路线，出发时间9:15，5人同行，预算不超过32元，要求最直接路线。
-2. 问题提问型: 我们5人9:15从阳光科创公交总站开车去华悦村，不绕路，油费能控制在32元以内吗？
-3. 简洁描述型: 起点：阳光科创公交总站，终点：华悦村，出发时间：9:15，出行人数：5，预算：32元
-***** 示例3 *****
-JSON:
-{{'起点': '下十围第一工业区', '终点': '红树林', '途经点数量': 0, '途经点顺序': '', '时间': '11:45', '出行人数': 5, '约束条件': '{{""出行方式"": ""SUBWAY"", ""优先级策略"": ""费用最低"", ""预算"": 49, ""到达"": ""true""}}'}}
-1. 直接请求型: 请为5人规划从下十围第一工业区到红树林的地铁路线，要求在11:45前到达，全程费用不超过49元，优先选择费用最低的方案
-2. 问题提问型: 我们5个人要在11:45前到达红树林，从下十围第一工业区坐地铁，49元预算够吗？有没有最省钱的地铁方案？
-3. 简洁描述型: 起点：下十围第一工业区，终点：红树林，到达时间：11:45前，出行人数：5，预算：49元，优化策略：费用最低
+# Generate three different phrasings for each question.
+QUERY_GENERATE_2 = """You will receive a JSON object and a SCRATCHPAD. Generate one route-planning query each time, using one of 3 styles, and avoid styles already used in the SCRATCHPAD.
+Rules:
+1. Keep the original meaning and constraints unchanged.
+2. Time, budget, and counts must remain exact.
+3. If a via point exists, mention stopping there for a concrete purpose with an approximate duration between 10 and 60 minutes, such as refueling, shopping, eating, picking someone up, or visiting.
+4. Generate exactly one query each time.
 
-***** 示例结束 *****
-请为以下JSON生成3种表述（保持原意不变），一定要生成3种：
+Three styles:
+1. Direct request.
+2. Question form.
+3. Concise description.
+
 JSON:{json}
 SCRATCHPAD:{scratchpad}
 QUERY:
@@ -308,102 +204,32 @@ query_generate_prompt_2 = PromptTemplate(
 
 )                        
 
-QUERY_GENERATE_3 = """你将收到一个简化的出行查询问题，请将它改写成更自然流畅的表达方式。
-要求：
-1. 保留所有原始信息（起点、终点、途经点、时间、出行方式、预算、限制条件等）
-2. 使用更自然的日常表达方式
-3. 可以适当增加合理的连接词和语气词
-4. 时间表达要自然，预算要明确，限制条件要清晰
+QUERY_GENERATE_3 = """You will receive a simplified travel query. Rewrite it into a more natural and fluent expression.
+Requirements:
+1. Preserve all original information: origin, destination, via points, time, mode, budget, and constraints.
+2. Use more natural everyday wording.
+3. You may add reasonable connectives or tone words.
+4. Make time, budget, and constraints clear.
 
-以下是丰富化后的完整示例集：
-
-***** 示例1 *****
-输入：
-从新和二新村出发，途经明卓公寓，前往金地峰境瑞府一期，16:40从起点出发，出行方式公共交通，预算8.0元。
-输出：
-下午4点40分我要从新和二新村这边出发，中途需要去明卓公寓办点事，最后到金地峰境瑞府一期，打算坐公交或地铁过去，全程花费最好别超过8块钱。
-
-***** 示例2 *****
-输入：
-从望桐阁出发，途经登良花园南区，前往勤诚达·正大城一期，15:23从起点出发，出行方式公共交通，选择路径的方式为步行最少，预算15.0元。
-输出：
-麻烦帮我规划下路线：今天下午3点23分从望桐阁出发，中途要去登良花园南区，然后坐公交地铁到勤诚达·正大城一期，希望能少走点路，总共花费控制在15元以内。
-
-***** 示例3 *****
-输入：
-从宝坪路口出发，途经库坑中心区，前往观湖松元厦，12:50从起点出发，出行方式打车，预算110元，在携带大件行李的情况下。
-输出：
-我中午12点50要带着大件行李从宝坪路口打车去观湖松元厦，中途需要在库坑中心区停一下，车费预算大概是110。
-
-***** 示例4 *****
-输入：
-从台本五金厂出发，途经信和天下，前往隆兴花园(田心大道)，在13:12之前到达终点，选择路径的方式为时间最短，考虑孕妇出行。
-输出：
-我怀孕了需要赶时间，从台本五金厂出发要去隆兴花园(田心大道)，中间要在信和天下办点事，最迟下午1点12分必须到，请给我推荐最快的路线。
-
-***** 示例5 *****
-输入：
-从登良路口出发，前往深大，12:02从起点出发，出行方式公共交通，预算6.0元。
-输出：
-中午12点02分我要从登良路口这边坐公交地铁去深圳大学，全程交通费最好不要超过6块钱。
-
-***** 示例6 *****
-输入：
-从足球场小区出发，前往金地花园，在16:53之前到达终点，出行方式公交车，预算6.0元。
-输出：
-麻烦问下，我下午4点53分前必须从足球场小区坐公交到金地花园，车费预算就6块钱，有什么推荐路线吗？
-
-***** 示例7 *****
-输入：
-从骏丰业大厦出发，前往大运，09:48从起点出发，出行方式公交车，选择路径的方式为换乘最少，考虑孕妇出行。
-输出：
-我现在怀孕了不太方便，早上9点48要从骏丰业大厦坐公交去大运那边，能不能找条不用转车或者转车少的路线？
-
-***** 示例8 *****
-输入：
-从旺海怡苑出发，前往中兴工业园一号岗，在12:09之前到达终点，出行方式公共交通，选择路径的方式为步行最少，预算6.0元，考虑残疾人出行。
-输出：
-我腿脚不太方便，中午12点09分前要从旺海怡苑到中兴工业园一号岗，想坐公交地铁过去，最好少走点路，全程花费6块钱够吗？
-
-***** 示例9 *****
-输入：
-从宝安勤诚达K+广场出发，途经吉水楼，前往康华居，09:32从起点出发，出行方式公共交通，预算9.0元，考虑残疾人出行。
-输出：
-我坐轮椅出行，早上9点32分得从宝安勤诚达K+广场出发，中途要去吉水楼一趟，最后到康华居，全程坐公交地铁的话，9块钱预算够不够？
-
-***** 示例结束 *****
-
-现在请用这样自然的表达方式改写下面的问题：
-输入：{query}
-输出："""
+Input: {query}
+Output:
+"""
 
 query_generate_prompt_3 = PromptTemplate(
                         input_variables=["query"],
                         template=QUERY_GENERATE_3,
                         )
-QUERY_GENERATE_4 = """给你一个JSON数据，请帮我生成一个自然语言查询语句。在该JSON中"起点"代表出发地点，"终点"代表目的地，"途经点数量"代表途经点的数量，"途经点"代表中途需要经过的地方，请注意，时间为24小时的格式。约束条件"到达"为true时，代表要在给定的时间之前到达目的地，为false时，说明时间为起点的出发时间，这些信息都来自于JSON数据，遇到途经点，必须要在途经点待半小时以上，你必须严格遵循示例中给出的格式，最终的问题就是查询出行的路径，不需要有太多无关的说明。以下是3个示例。
+QUERY_GENERATE_4 = """You will receive a JSON object. Generate one natural-language travel query from it.
+Field meanings:
+- "origin": departure place
+- "destination": destination
+- "num_via_points": number of via points
+- "via_points": place(s) that must be visited on the way
+- "time": 24-hour time
+- "time_type": if it means arriving before a given time, use an arrival-style request; otherwise treat it as departure time
+- If there is a via point, explicitly say the user needs to stay there for at least 30 minutes.
+Follow the example style and output only the final travel query.
 
-***** 示例1 *****
-JSON:
-{{"起点": "深圳市上屋小学", "途经点数量": 0, "途经点": null, "终点": "洪田工业区", "时间": "12:16", "时间性质": "出发", "出行方式": "开车", "约束条件": {{"出行偏好": null, "环境约束": "携带大件行李", "个体约束": "孕妇", "费用": 9.4}}}}
-QUERY:
-我需要从深圳市上屋小学开车前往洪田工业区，中午12点16分出发。我是一名孕妇，还携带大件行李，请帮我规划一条安全舒适的驾车路线，费用最好控制在10元以内。
-
-***** 示例2 *****
-JSON:
-{{"起点": "马坜老二村", "途经点数量": 0, "途经点": null, "终点": "东华格林第二幼儿园", "时间": "18:59", "时间性质": "到达", "出行方式": "公共交通", "约束条件": {{"出行偏好": "换乘最少-最晚到达", "环境约束": null, "个体约束": "小孩", "费用": 4.0}}}}
-QUERY:
-我带着小孩从马坜老二村乘坐公共交通前往东华格林第二幼儿园。需要在晚上6点59分之前到达，希望选择换乘最少、最晚出发的方案，费用控制在4元以内。
-
-***** 示例3 *****
-JSON:
-{{"起点": "荣村小区", "途经点数量": 0, "途经点": null, "终点": "汉京·九榕台", "时间": "17:53", "时间性质": "出发", "出行方式": "单车+公共交通", "约束条件": {{"出行偏好": "时间最少-最早出发", "环境约束": null, "个体约束": null, "费用": 6.0}}}}
-QUERY:
-我要从荣村小区骑单车转乘公共交通前往汉京·九榕台，下午5点53分出发。希望规划时间最少、最早到达的路线方案，总费用不超过6元。
-
-***** 示例结束 *****
-
-请根据以下JSON数据生成自然语言查询语句：
 JSON:{json}
 QUERY:"""
 query_generate_prompt_4 = PromptTemplate(
@@ -411,78 +237,16 @@ query_generate_prompt_4 = PromptTemplate(
                         template=QUERY_GENERATE_4,
                         )
 
-                    
+QUERY_GENERATE_5 = """You will receive a JSON object. Generate one natural, realistic travel-planning request in Chinese based on it.
+Do not mechanically copy field names. Understand the meaning and express the request naturally.
+Rules:
+1. If "travel_mode" is empty, you may omit it.
+2. If there is one mode, mention it directly.
+3. If there are multiple modes, describe them naturally instead of just listing them.
+4. Express "travel_preference" in natural language while preserving meaning.
+5. If a via point exists, you must say the user will go there first, stay for the specified time, and then continue to the destination.
+6. Do not explain the JSON or output extra commentary.
 
-QUERY_GENERATE_5 = """给你一个 JSON 数据，请根据其中的信息生成一句自然、真实的中文出行查询语句。
-
-你不需要逐字照搬 JSON 中的字段名称，而是应当理解字段含义，用多样化、符合日常表达的方式提出“路径规划需求”。
-
-========================
-字段语义说明（用于理解）
-========================
-- 起点 / 终点：出发地和目的地
-- 途经点数量：中途是否需要经过其他地点
-- 途经点：中途需要到达的地点
-- 停留时间：在途经点至少停留的分钟数
-- 出发时间：从起点出发的时间，24小时制
-- 时间窗口：允许的总出行时间（分钟，0 表示不强调）
-- 出行方式：可能为空、1 种或多种，只可能来自：
-  公交车、地铁、公共交通、打车、开车、单车+公共交通
-- 约束条件：
-  - 出行偏好（0–2 个）：最早出发、最晚出发、最早到达、最晚到达、
-    时间最少、费用最低、换乘最少、步行最少
-  - 环境约束：下雨、打雷、携带大件行李
-  - 个体约束：老人、小孩、孕妇、残疾人
-  - 费用：可接受的最高费用（元）
-
-========================
-生成要求（非常重要）
-========================
-1. 出行方式：
-   - 如果为空，可以不提
-   - 如果只有一种，直接说明
-   - 如果有多种，不要简单罗列“乘坐A和B和C”
-     可以改为：
-       - 不考虑某种方式
-       - 优先选择某一类方式
-       - 避免私家车 / 不坐公交 等自然说法
-
-2. 出行偏好：
-   - 0 个：可以说“没有特别偏好”
-   - 1 个：直接描述
-   - 2 个：使用“在……前提下……”“同时希望……”等自然组合
-
-3. 环境约束、个体约束：
-   - 可以用任意自然表达方式
-   - 只要语义与 JSON 一致即可
-
-4. 若存在途经点：
-   - 必须说明“先到达途经点”
-   - 必须说明“在该地点至少停留指定时间”
-   - 再前往终点
-
-5. 整体语气应像真实用户在请求路径规划，
-   不要解释 JSON，不要列字段，不要输出多余说明。
-
-========================
-示例
-========================
-
-***** 示例1 *****
-JSON:
-{{"起点":"坑梓基地","途经点数量":0,"途经点":null,"停留时间":null,"终点":"安居南馨苑","出发时间":12:31,"时间窗口":0,"出行方式":"公交车|地铁|公共交通|打车|单车+公共交通","约束条件":{{"出行偏好":"时间最少-换乘最少","环境约束":null,"个体约束":null,"费用":10}}}}
-QUERY:
-我需要从坑梓基地前往安居南馨苑，我想12:31出发，希望整体用时尽量短、换乘次数少一些。出行方式上不限定具体形式，优先考虑公共交通方案，费用最好控制在10元以内。
-
-***** 示例2 *****
-JSON:
-{{"起点":"新安中学(集团)燕川中学","途经点数量":1,"途经点":"庙溪一市场","停留时间":15,"终点":"劲嘉彩印","出发时间":15:36,"时间窗口":85,"出行方式":"开车|打车","约束条件":{{"出行偏好":"换乘最少-最晚到达","环境约束":"下雨","个体约束":"孕妇","费用":28}}}}
-QUERY:
-我计划15:36从新安中学(集团)燕川中学出发，先前往庙溪一市场，并在那边至少停留15分钟，之后再前往劲嘉彩印。全程希望控制在85分钟以内，可以选择开车或打车。由于下雨且是孕期出行，希望路线尽量简单、换乘少一些，并在满足最晚到达要求的情况下，费用不超过28元。
-
-***** 示例结束 *****
-
-请根据下面的 JSON 数据生成自然语言出行查询语句：
 JSON:{json}
 QUERY:
 """
@@ -492,56 +256,22 @@ query_generate_prompt_5 = PromptTemplate(
                         template=QUERY_GENERATE_5,
                         )
 
-QUERY_GENERATE_6 = """给你一个 JSON 数据，请根据其中的信息生成【一条】中文出行查询语句。
+QUERY_GENERATE_6 = """You will receive a JSON object. Generate exactly one Chinese travel query in a constraint-first style.
+Style requirements:
+- Do not start with the origin and destination.
+- Start with preferences, restrictions, or unacceptable conditions.
+- Use wording such as "provided that", "prioritizing", "avoid if possible", or "must satisfy".
+- The tone should sound like the user is telling the system what kind of route is acceptable.
+- Origin, destination, and time may appear later in the sentence.
+- Do not write it like a narrative or a navigation command.
+Other rules:
+- If preferences exist, express them clearly.
+- If via points exist, say the user goes there first, stays for the required time, and then continues.
+- If multiple modes exist, express them naturally.
+- Time must be explicit and not vague.
 
-你的目标是生成【条件筛选型（Constraint-first）】的提问方式。
-
-========================
-写作风格要求（非常重要）
-========================
-- 不要一开始就说明起点和终点
-- 必须先描述出行偏好、限制条件或不可接受的情况
-- 使用“前提是 / 更看重 / 尽量避免 / 需要满足 / 希望在……条件下”等表达
-- 语气像是在告诉系统“什么样的路线才是我能接受的”
-- 起点、终点、出发时间等信息可以放在后半部分补充
-- 不能写成叙事，也不能像导航指令
-
-========================
-出行规则（必须遵守）
-========================
-1. 若存在出行偏好：
-   - 一个偏好：直接描述
-   - 两个偏好：用条件句组合表达（如“在……前提下……”）
-
-2. 若存在途经点：
-   - 必须说明先到达途经点
-   - 必须说明在该地点至少停留指定时间
-   - 再前往终点
-
-3. 出行方式：
-   - 单一方式：直接说明
-   - 多种方式：用“可以选择 / 优先 / 不考虑”等自然说法
-
-4. 时间表达必须明确，不可模糊。
-
-========================
-示例
-========================
-
-***** 示例 *****
-JSON:
-{{"起点":"新安中学(集团)燕川中学","途经点数量":1,"途经点":"庙溪一市场","停留时间":15,"终点":"劲嘉彩印","出发时间":15:36,"时间窗口":85,"出行方式":"开车|打车","约束条件":{{"出行偏好":"换乘最少-最晚到达","环境约束":"下雨","个体约束":"孕妇","费用":28}}}}
-
-QUERY:
-这次出行更希望路线简单、尽量减少换乘，并且需要在允许最晚到达的前提下完成行程。考虑到下雨天气和孕期出行，可以选择开车或打车，费用控制在28元以内。计划15:36从新安中学(集团)燕川中学出发，先到庙溪一市场停留15分钟，再前往劲嘉彩印，全程不超过85分钟。
-
-========================
-任务
-========================
-请根据下面的 JSON 数据，生成一条【条件筛选型】出行查询语句：
 JSON:{json}
-
-请只输出一行查询语句，不要添加任何多余内容。
+Please output one line only.
 """
 
 
@@ -549,1177 +279,288 @@ query_generate_prompt_6 = PromptTemplate(
                         input_variables=["json"],
                         template=QUERY_GENERATE_6,
                         )
-QUERY_GENERATE_7 = """给你一个 JSON 数据，请根据其中的信息生成【一条】中文出行查询语句。
+QUERY_GENERATE_7 = """You will receive a JSON object. Generate exactly one Chinese travel query in a narrative, daily-life style.
+Style requirements:
+- Start from a life situation or personal condition, such as time, weather, health, or a temporary arrangement.
+- Sound conversational and natural, like a real user explaining their plan.
+- Do not write it like a navigation command or a dry condition list.
+- You may reorder the information, but do not omit anything important.
+- Time must be explicit, not vague.
+Other rules:
+- If environmental or personal constraints exist, blend them naturally into the narration.
+- If via points exist, clearly say where to go first, how long to stay, and then continue to the destination.
+- Mention travel mode naturally.
+- Do not explain the JSON or mention field names.
 
-你的目标是生成【生活叙述型（Narrative-style）】的提问方式。
-
-========================
-写作风格要求（非常重要）
-========================
-- 必须从生活场景或个人状态切入
-  （如时间、天气、身体情况、临时安排等）
-- 表达要口语化、自然，像真实用户在讲自己的出行计划
-- 不能像导航指令，也不能像条件罗列
-- 允许打乱信息顺序，但信息必须完整
-- 时间必须明确，不能用模糊说法（如“差不多”“大概”）
-
-========================
-出行规则（必须遵守）
-========================
-1. 若存在环境或个体约束：
-   - 必须自然融入叙述中（如天气、身体状况）
-
-2. 若存在途经点：
-   - 必须明确“先去哪里”
-   - 必须说明停留至少指定时间
-   - 再前往终点
-
-3. 出行方式：
-   - 单一方式：自然提及
-   - 多种方式：用“都可以 / 比较合适 / 不太想用某种”等方式表达
-
-4. 不要解释 JSON，不要出现字段名。
-
-========================
-示例
-========================
-
-***** 示例 *****
-JSON:
-{{"起点":"新安中学(集团)燕川中学","途经点数量":1,"途经点":"庙溪一市场","停留时间":15,"终点":"劲嘉彩印","出发时间":15:36,"时间窗口":85,"出行方式":"开车|打车","约束条件":{{"出行偏好":"换乘最少-最晚到达","环境约束":"下雨","个体约束":"孕妇","费用":28}}}}
-
-QUERY:
-下午15:36我要从新安中学(集团)燕川中学出发，正好赶上下雨，而且还是孕期出行，所以不太适合折腾换乘。我需要先去一趟庙溪一市场，在那边待15分钟左右，然后再去劲嘉彩印，希望整个行程控制在85分钟以内。开车或打车都可以，费用最好不要超过28元。
-
-========================
-任务
-========================
-请根据下面的 JSON 数据，生成一条【生活叙述型】出行查询语句：
 JSON:{json}
-
-请只输出一行查询语句，不要添加任何多余内容。
+Please output one line only.
 """
                       
 query_generate_prompt_7 = PromptTemplate(
                         input_variables=["json"],
                         template=QUERY_GENERATE_7,
                         )
-# ZEROSHOT_REACT_INSTRUCTION = """使用交错的'Thought', 'Action', 和 'Observation'步骤收集查询计划的信息。确保你收集了起点和终点的经纬度坐标、交通方式、日期和时间、这两点之间的路径有效信息。所有信息都应写在笔记本上，然后输入到计划表工具中。注意，工具的嵌套使用是禁止的。'Thought', 可以对当前情况进行推理，'Action'可以有4种不同的类型：
-# (1) Wgs84Search[目标点名称]:
-# 描述：一个地理信息编码转换工具。
-# 参数：
-# 目标点名称：解析出来的目标点的名称。
-# 例如：Wgs84Search[深圳先进技术研究院]:将名称为深圳先进技术研究院的目标点转换为火星坐标系的经纬度坐标。
-# (2) RouteSearch["fromPlace"，"toPlace"，"time"，"arriveBy"，"mode"]:
-# 描述：一个路径规划工具，路径规划工具，必须严格使用 scratchpad 中存储的坐标数据，禁止虚构坐标。
-# 参数规则：
-# 1. `fromPlace` 和 `toPlace` 的坐标必须来自 scratchpad 的记录，格式为："名称::纬度,经度"
-# 2. 如果 scratchpad 中没有坐标数据，必须先调用 Wgs84Search 获取坐标
-# 3. 时间参数必须按以下规则处理：
-# 当query中强调了时间为到达时间时，arriveBy参数就必须设置成为true，则需要从后往前推理，需要将最后一程的路径信息保存，最后一程的出发时间作为倒数第二程的到达时间参考值，必须要早于符合条件的时间，以此类推，这一条行程都是从后往前推的。
-# 否则需要从前往后推理，第一段行程的出发时间为所给的时间，第二段行程的出发时间为第一段行程的到达时间加上停留时间，以此类推。
-# 4. 出行方式对应关系：地铁：SUBWAY，公交：BUS，公交地铁：TRANSIT，打车或出租：CAR_PICKUP,自驾或者开车：CAR，没有指定出行方式时候，则设置TRANSIT值，这些出行方式在规划一个路径之内都不会发生改变，始终取同样的值，直到规划下一条查询。
-# 5.带途经点的路径逻辑：
-# 如果强调时间是到达时间，那么假如路线是A->B->C->D，那么就按照以下步骤来查询路径：
-# 先计算最后一个途经点到终点的路径，RouteSearch[C,D,time,"arriveBy": "true",mode],这里的arriveBy值一定要设置成为true，然后查询到C->D的路径信息，假如路径信息为18:00-19:00 18:02-19:02 18:10:-19:12
-# 再计算倒数第二个途经带点到最后一个途经点的路径，RouteSearch[B,C,time,"arriveBy": "true",mode]这里的arriveBy值一定要设置成为true，然后查询到B->C的路径信息，本段的到达时间time的值由上一段C->D路径中出发的最晚方案时间获取出，不能晚于上一段的最晚的出发时间，则不能晚于18:10,最后查询到的路径信息假如时间为17:00-17:55，17:20-17:56,17:20-18:00
-# 最后计算起点到第一个途经点的路径，RouteSearch[A,B,time,"arriveBy": "true",mode]这里的arriveBy值一定要设置成为true，然后查询到A->B的路径信息，然后查询到A->B的路径信息，本段的到达时间time的值由上一段B->C路径出发最晚的方案的时间获取出，不能晚于上一段的出发时间，则不能晚于17:20,
-# 如果强调时间是出发时间，那么就好办了那么假如路线是A->B->C->D，那么就按照以下步骤来查询路径：
-# 先计算起点到第一个途经点的路径，RouteSearch[A,B,time,"arriveBy": "false",mode]这里的arriveBy值一定要设置成为false，然后查询到A->B的路径信息，然后查询到A->B的路径信息，具有多个方案时，取到达时间最早方案的时间作为下一段的出发时间
-# 在后计算倒数第二个途经带点到最后一个途经点的路径，RouteSearch[B,C,time,"arriveBy": "false",mode]这里的arriveBy值一定要设置成为false，然后查询到B->C的路径信息，本段的出发时间time的值由上一段A->B路径中到达的最早方案时间获取出，不能早于上一段的最早的到达时间
-# 最后计算最后一个途经点到终点的路径，RouteSearch[C,D,time,"arriveBy": "false",mode],这里的arriveBy值一定要设置成为false，然后查询到C->D的路径信息，本段的出发时间time的值由上一段B->C路径中到达的最早方案时间获取出，不能早于上一段的最早的到达时间
-
-# 参数：这是一个dict格式的参数，包含了以下字段："time": HH:MM格式，24小时的形式，由问题query中获得第一段行程的time，后续的time由推理得出,"mode": 可选多种交通模式，分别有BUS,SUBWAY,CAR_PICKUP为出租或者网约车,CAR为自驾,例如"mdoe":"TRANSIT",没有强调出行方式时默认为'TRANSIT',"fromPlace":"起点名字::纬度，经度",这是必须要传入的参数。用户强调要在规定时间到达目的地时，传入的参数"arriveBy"一定为true，且这一条行程中所有查询的arriveBy参数都是true，此时查询路径就需要倒推了。传入的参数只包含"toPlace"、"fromPlace"、 "time"、"arriveBy"、"mode"这五个，一定不要增加新的参数名。
-# RouteSearch[{{"fromPlace": "起点::22.535707,113.916206", "toPlace": "终点::22.736923,113.836555", "time": "14:00", "arriveBy": "false","mode": "CAR"}}]。
-# (3)NotebookWrite[简短描述]:
-# 描述：在Notebook工具中写入一个带有简短描述的新数据条目。这个工具必须在每一次调用RouteSearch和Wgs84Search这两个工具之后立即使用，只有存储在Notebook中的数据才能被Planner看到，所以你应该在每一次获取坐标和每一次规划路径之后将搜索出来的信息都写入Notebook中。
-# 参数：简短描述-对存储数据的简短描述或标签。你不需要把所有的信息都写在描述里。你搜索的数据降自动存储到Notebook中
-# (4) Planner[query]:
-# 描述：一个智能规划工具，根据用户输入和笔记本中存储的信息制作详细的计划。
-# 参数：
-# query：用户输入的查询。
-# 例如：Planner[从深圳先进技术研究院到深圳大学的交通方式和路线]。
-# 你应该使用尽可能多的步骤来收集足够的信息以输入到Planner中。
-# 每个操作只调用一个函数一次，不要在动作中添加任何描述。
-
-# Query: {query}{scratchpad}"""
-
-
-# ZEROSHOT_REACT_INSTRUCTION = """
-
-# 你正在使用 ReAct 思维框架，但你必须严格遵守以下“单步骤输出规则”：
-
-# 【单步骤输出规则】
-# - 每一次回复只能输出一个模块：Thought / Action / Observation。
-# - Thought 中绝对不能包含任何 Action。
-# - Action 中不得包含任何多余描述，只能包含工具调用,不能包含action字段。
-# - 不允许把 Thought 和 Action 放在同一条消息里。
-# - 每次只执行/表达一个步骤，下一步骤必须等待下一轮对话再输出。
-
-# (1) CoordSearch[目标点名称]:
-# 描述：一个地理坐标搜索工具。
-# 参数：
-# 目标点名称：搜索位置信息的坐标
-# 例如：CoordSearch[深圳先进技术研究院]:将名称为深圳先进技术研究院的目标点转换为火星坐标系的经纬度坐标。
-# (2) RouteSearch["fromPlace"，"toPlace"，"time"，"arriveBy"，"mode"]:
-# 描述：一个路径规划工具，路径规划工具，必须严格使用 scratchpad 中存储的坐标数据，禁止虚构坐标。
-# 参数：
-# 1. `fromPlace` 和 `toPlace` 的坐标必须来自 scratchpad 的记录，格式为："名称::纬度,经度"
-# 2. 如果 scratchpad 中没有坐标数据，必须先调用 CoordSearch 获取坐标
-# 3. 时间参数必须按以下规则处理：
-# 当query中强调了时间为到达时间时，arriveBy参数就必须设置成为true，则需要从后往前推理，需要将最后一程的路径信息保存，最后一程的出发时间作为倒数第二程的到达时间参考值，必须要早于符合条件的时间，以此类推，这一条行程都是从后往前推的。
-# 否则需要从前往后推理，第一段行程的出发时间为所给的时间，第二段行程的出发时间为第一段行程的到达时间加上停留时间，以此类推。
-# 4. 出行方式对应关系：地铁：SUBWAY，公交：BUS，公交地铁：TRANSIT，打车或出租：CAR_PICKUP,自驾或者开车：CAR，没有指定出行方式时候，则设置TRANSIT值，这些出行方式在规划一个路径之内都不会发生改变，始终取同样的值，直到规划下一条查询。
-# 5.带途经点的路径逻辑：
-# 如果强调时间是到达时间，那么假如路线是A->B->C->D，那么就按照以下步骤来查询路径：
-# 先计算最后一个途经点到终点的路径，RouteSearch[C,D,time,"arriveBy": "true",mode],这里的arriveBy值一定要设置成为true，然后查询到C->D的路径信息，假如路径信息为18:00-19:00 18:02-19:02 18:10:-19:12
-# 再计算倒数第二个途经带点到最后一个途经点的路径，RouteSearch[B,C,time,"arriveBy": "true",mode]这里的arriveBy值一定要设置成为true，然后查询到B->C的路径信息，本段的到达时间time的值由上一段C->D路径中出发的最晚方案时间获取出，不能晚于上一段的最晚的出发时间，则不能晚于18:10,最后查询到的路径信息假如时间为17:00-17:55，17:20-17:56,17:20-18:00
-# 最后计算起点到第一个途经点的路径，RouteSearch[A,B,time,"arriveBy": "true",mode]这里的arriveBy值一定要设置成为true，然后查询到A->B的路径信息，然后查询到A->B的路径信息，本段的到达时间time的值由上一段B->C路径出发最晚的方案的时间获取出，不能晚于上一段的出发时间，则不能晚于17:20,
-# 如果强调时间是出发时间，那么就好办了那么假如路线是A->B->C->D，那么就按照以下步骤来查询路径：
-# 先计算起点到第一个途经点的路径，RouteSearch[A,B,time,"arriveBy": "false",mode]这里的arriveBy值一定要设置成为false，然后查询到A->B的路径信息，然后查询到A->B的路径信息，具有多个方案时，取到达时间最早方案的时间作为下一段的出发时间
-# 在后计算倒数第二个途经带点到最后一个途经点的路径，RouteSearch[B,C,time,"arriveBy": "false",mode]这里的arriveBy值一定要设置成为false，然后查询到B->C的路径信息，本段的出发时间time的值由上一段A->B路径中到达的最早方案时间获取出，不能早于上一段的最早的到达时间
-# 最后计算最后一个途经点到终点的路径，RouteSearch[C,D,time,"arriveBy": "false",mode],这里的arriveBy值一定要设置成为false，然后查询到C->D的路径信息，本段的出发时间time的值由上一段B->C路径中到达的最早方案时间获取出，不能早于上一段的最早的到达时间
-
-# 参数：这是一个dict格式的参数，包含了以下字段："time": HH:MM格式，24小时的形式，由问题query中获得第一段行程的time，后续的time由推理得出,"mode": 可选多种交通模式，分别有BUS,SUBWAY,CAR_PICKUP为出租或者网约车,CAR为自驾,例如"mdoe":"TRANSIT",没有强调出行方式时默认为'TRANSIT',"fromPlace":"起点名字::纬度，经度",这是必须要传入的参数。用户强调要在规定时间到达目的地时，传入的参数"arriveBy"一定为true，且这一条行程中所有查询的arriveBy参数都是true，此时查询路径就需要倒推了。传入的参数只包含"toPlace"、"fromPlace"、 "time"、"arriveBy"、"mode"这五个，一定不要增加新的参数名。
-# RouteSearch[{{"fromPlace": "起点::22.535707,113.916206", "toPlace": "终点::22.736923,113.836555", "time": "14:00", "arriveBy": "false","mode": "CAR"}}]。
-
-# (3) RouteRank[time,arriveBy,preference]:
-# 描述：一个路径排序工具，根据用户输入和笔记本中存储的信息排序路径,在查询完路径之后进行排名。
-# 参数：仅仅包含三个参数:
-# time:出发或者到达时间
-# arriveBy：到达或者出发时间类型，出发为False，到达为True
-# preference：出行偏好可以选择(步行最短,时间最少,费用最低,换乘最少,距离最短,其中一种，如果用户没有明确提出方案偏好，则默认为无偏好)
-# 例如：RouteRank[17:45,false,步行最短]。
-
-
-# (4)NotebookWrite[简短描述]:
-# 描述：在Notebook工具中写入一个带有简短描述的新数据条目。这个工具必须在每一次调用RouteSearch和CoordSearch这两个工具之后立即使用，只有存储在Notebook中的数据才能被Planner看到，所以你应该在每一次获取坐标和每一次规划路径之后将搜索出来的信息都写入Notebook中。
-# 参数：简短描述-对存储数据的简短描述或标签。你不需要把所有的信息都写在描述里。你搜索的数据降自动存储到Notebook中
-# (5) Planner[query]:
-# 描述：一个智能规划工具，根据用户输入和笔记本中存储的信息制作详细的计划。
-# 参数：
-# query：用户输入的查询。
-# 例如：Planner[从深圳先进技术研究院到深圳大学的交通方式和路线]。
-# 你应该使用尽可能多的步骤来收集足够的信息以输入到Planner中。
-
-
-# 【重要修正】
-# - Thought模块：只包含纯粹的思考过程、推理和分析，绝对不能包含任何工具调用或行动意图，不允许出现Action内容
-# - Action模块：只包含纯粹的工具调用，格式为：工具名[参数]
-# - 每个操作只调用一个工具函数一次
-# - 严格遵守单步骤输出规则
-
-
-# Query: {query}{scratchpad}"""
-
-
-
-# ZEROSHOT_REACT_INSTRUCTION = """
-
-# 你正在使用 ReAct 思维框架，但你必须严格遵守以下“单步骤输出规则”：
-
-# 【单步骤输出规则】
-# - 每一次回复只能输出一个模块：Thought / Action / Observation。
-# - Thought 中绝对不能包含任何 Action。
-# - Action 中不得包含任何多余描述，只能包含工具调用,不能包含action字段。
-# - 不允许把 Thought 和 Action 放在同一条消息里。
-# - 每次只执行/表达一个步骤，下一步骤必须等待下一轮对话再输出。
-
-# (1) CoordSearch[目标点名称]:
-# 描述：一个地理坐标搜索工具。
-# 参数：
-# 目标点名称：搜索位置信息的坐标
-# 例如：CoordSearch[深圳大学]:将名称为深圳大学的目标点转换为火星坐标系的经纬度坐标。
-
-# (2) RouteSearch["fromPlace"，"toPlace"，"time"，"arriveBy"，"mode"]:
-# 描述：一个路径规划工具，路径规划工具，必须严格使用 scratchpad 中存储的坐标数据，禁止虚构坐标。
-# 参数：
-# 1. `fromPlace` 和 `toPlace` 的坐标必须来自 scratchpad 的记录，格式为："名称::纬度,经度"。
-# 2. time: 用户需求中解析出来的时间，24小时制HH：MM。
-# 3. arriveBy: 用户需求中解析出来的时间性质，到达为true，出发为false。
-# 4. 出行方式对应有6种对应关系：地铁：SUBWAY，公交车：BUS，公交地铁：TRANSIT，打车：CAR_PICKUP,开车：CAR，单车+公交地铁：TRANSIT,BICYCLE
-# 没有指定出行方式时候，等于空:""，存在多种出行方式时候,可以用"|"分隔，例如："BUS|SUBWAY"。
-# 当用户需求提到出行方式mode时，直接使用用户需求中得出行方式，
-# 当出行方式mode没有提到为空时候，存在个体约束就会隐含一些出行方式：老人或者残疾人-排除单车和开车，孕妇-排除单车，小孩-排除开车。
-# 传入的参数只包含"toPlace"、"fromPlace"、 "time"、"arriveBy"、"mode"这五个，一定不要增加新的参数名。
-
-# 例如：RouteSearch[{{"fromPlace": "起点::22.535707,113.916206", "toPlace": "终点::22.736923,113.836555", "time": "14:00", "arriveBy": "false","mode": "BUS|SUBWAY"}}]。
-
-# (3) RouteRank[time,arriveBy,preference]:
-# 描述：一个路径排序工具，根据用户输入和笔记本中存储的信息排序路径,返回一条满足该条件下的最优路径。
-# 参数：仅仅包含三个参数:
-# time:出发或者到达时间
-# arriveBy：到达或者出发时间类型，出发为False，到达为True
-# preference：依据用户需求中"出行偏好"字段包含多个用"|"分隔
-# 例如：RouteRank[17:45,false,换乘最少]。
-
-# (4)NotebookWrite[简短描述]:
-# 描述：在Notebook工具中写入一个带有简短描述的新数据条目。这个工具必须在每一次调用RouteSearch和RouteRank这两个工具之后立即使用，只有存储在Notebook中的数据才能被Planner看到，所以你应该在每一次获取坐标和每一次规划路径之后将搜索出来的信息都写入Notebook中。
-# 参数：简短描述-对存储数据的简短描述或标签。你不需要把所有的信息都写在描述里。你搜索的数据降自动存储到Notebook中
-
-
-
-# (5) Planner[query]:
-# 描述：一个智能规划工具，根据用户输入和笔记本中存储的信息制作详细的计划。
-# 参数：
-# query：用户输入的问题和解析的参数。
-# 例如：Planner[从深圳先进技术研究院到深圳大学的交通方式和路线]。
-# 你应该使用尽可能多的步骤来收集足够的信息以输入到Planner中。
-
-
-# 【重要修正】
-# - Thought模块：只包含纯粹的思考过程、推理和分析，绝对不能包含任何工具调用或行动意图，不允许出现Action内容
-# - Action模块：只包含纯粹的工具调用，格式为：工具名[参数]
-# - 每个操作只调用一个工具函数一次
-# - 严格遵守单步骤输出规则
 
 ZEROSHOT_REACT_INSTRUCTION = """
+You are using the ReAct framework. You must strictly follow the single-step output rule.
 
-你正在使用 ReAct 思维框架，但你必须严格遵守以下“单步骤输出规则”：
+Single-step output rule:
+- Each reply may contain only one module: Thought, Action, or Observation.
+- Thought must not contain any Action.
+- Action must contain exactly one tool call and no extra text. Only one of CoordSearch, RouteSearch, RouteRank, NotebookWrite, or Planner may be called.
+- Do not put Thought and Action in the same message.
+- After one step, wait for the next turn before producing the next step.
 
-【单步骤输出规则】
-- 每一次回复只能输出一个模块：Thought / Action / Observation。
-- Thought 中绝对不能包含任何 Action。
-- Action 中不得包含任何多余描述，只能包含工具调用,不能包含action字段，只允许有[CoordSearch、RouteSearch、RouteRank、NotebookWrite、Planner]其中一次调用。
-- 不允许把 Thought 和 Action 放在同一条消息里。
-- 每次只执行/表达一个步骤，下一步骤必须等待下一轮对话再输出。
+1. CoordSearch[place_name]
+Description: a geographic coordinate lookup tool.
+Parameter:
+- place_name: the place whose coordinates should be searched.
+Example: CoordSearch[Shenzhen University]
 
-(1) CoordSearch[目标点名称]:
-描述：一个地理坐标搜索工具。
-参数：
-目标点名称：搜索位置信息的坐标
-例如：CoordSearch[深圳大学]:将名称为深圳大学的目标点转换为火星坐标系的经纬度坐标。
+2. RouteSearch[{"fromPlace": ..., "toPlace": ..., "viaPlace": ..., "time": ..., "mode": ..., "stayMinutes": ..., "window": ...}]
+Description: a route-planning tool for urban travel. Search a one-segment or two-segment route only once; do not split it into separate searches.
+You must strictly use coordinates already stored in the scratchpad. Never invent coordinates.
+Parameter rules:
+- fromPlace / toPlace are required and must be in the form "place_name::latitude,longitude".
+- time is required and must be the parsed 24-hour time "HH:MM".
+- viaPlace is optional and should be passed only when a via point explicitly exists.
+- stayMinutes is optional and should be passed only when the user explicitly mentions a stay duration.
+- window is optional and should be passed only when the user explicitly mentions a time window.
+- mode is optional and only allows these mappings:
+  subway -> SUBWAY
+  bus -> BUS
+  bus+subway -> TRANSIT
+  taxi -> CAR_PICKUP
+  drive -> CAR
+  bike+bus/subway -> TRANSIT,BICYCLE
+Usage rules:
+- If the user explicitly specifies a travel mode, use the parsed result directly.
+- Multiple modes must be joined with "|".
+- If no travel mode is specified, pass an empty string.
+Implicit constraints, only when mode is empty:
+- large_luggage: forbid TRANSIT,BICYCLE
+- elderly: forbid CAR, TRANSIT,BICYCLE
+- pregnant: forbid TRANSIT,BICYCLE
+- child: forbid CAR
+- disabled: forbid CAR, TRANSIT,BICYCLE
+Important constraints:
+- Only the modes above are allowed. Do not add or infer undefined modes.
+- Constraints may only remove modes, never introduce new ones.
 
-(2) RouteSearch["fromPlace","toPlace","viaPlace","time","mode","stayMinutes","window"]:
-描述：路径规划工具，用于搜索城市出行路线。一段路径和两段路径都仅仅搜索一次，不进行拆分搜索。
-必须严格使用 scratchpad 中已存储的坐标，禁止虚构。
-参数说明：
-fromPlace / toPlace（必选）
-   格式："地点名称::纬度,经度"，坐标必须来自 scratchpad。
-time（必选）
-   用户需求中解析的时间，24 小时制："HH:MM"。
-viaPlace（可选）
-   用户明确存在途经点时才传入，否则不传。
-stayMinutes（可选）
-   存在途经点且用户明确提到停留时间时才传入，单位为分钟。
-window（可选）
-   用户明确提到时间窗口时才传入，单位为分钟。
-mode（可选）
-出行方式参数，仅允许以下映射结果：
-地铁→SUBWAY，公交→BUS，公交+地铁→TRANSIT，
-打车→CAR_PICKUP，开车→CAR，单车+公交/地铁→TRANSIT,BICYCLE。
+Example:
+RouteSearch[{{"fromPlace": "origin::22.6537223,114.0242094", "toPlace": "destination::22.543096,114.057865", "viaPlace": "via::22.5934193,113.993249", "time": "19:00", "mode": "BUS|SUBWAY", "stayMinutes": 20, "window": "180"}}]
+RouteSearch[{{"fromPlace": "origin::22.6537223,114.0242094", "toPlace": "destination::22.543096,114.057865", "time": "19:00", "mode": "BUS|SUBWAY", "window": "180"}}]
 
-使用规则：
-- 用户明确指定出行方式时，直接使用解析结果
-- 多种方式使用 "|" 分隔
-- 用户未指定出行方式时，mode 传空字符串 ""
-
-隐式约束规则（仅在 mode 为空时生效）：
-- 环境约束：
-  - 携带大件行李：禁止 TRANSIT,BICYCLE
-- 个体约束：
-  - 老人：禁止 CAR、TRANSIT,BICYCLE
-  - 孕妇：禁止 TRANSIT,BICYCLE
-  - 小孩：禁止 CAR
-  - 残疾人：禁止 CAR、TRANSIT,BICYCLE
-
-重要约束：
-- 仅允许使用上述出行方式，不得新增或推断新的出行方式
-- 仅通过排除方式施加约束，不得引入未定义的 mode
-
-
-例如：RouteSearch[{{"fromPlace": "起点名::22.6537223,114.0242094", "toPlace": "终点名::22.543096,114.057865", "viaPlace": "途经点名::22.5934193,113.993249", "time": "19:00", "mode": "BUS|SUBWAY", "stayMinutes": 20, "window": "180"}}]
-      RouteSearch[{{"fromPlace": "起点名::22.6537223,114.0242094", "toPlace": "终点名::22.543096,114.057865",  "time": "19:00", "mode": "BUS|SUBWAY", "window": "180"}}]
- 
-(3) RouteRank[time=, time_window=, preference=, stay_time=]:
-描述：路径排序工具，对 RouteSearch 返回的候选路径进行排序并选出最优结果。
-
-参数说明（全部必选）：
-- time=HH:MM  
-    排序基准时间，24 小时制。
-- time_window=分钟
-    时间窗口，仅在用户需求存在弹性或窗口约束时传入，若不存在请写 time_window=None。
-- preference="偏好组合"  
-    出行偏好，必须由以下 8 种原子偏好组成：
-        最早出发、最早到达、最晚出发、最晚到达、
-        时间最少、费用最低、步行最少、换乘最少
-    组合规则：
-        - 必须传入字符串，若无偏好则写 preference=None
-        - 可以由 1 或 2 个原子偏好组成，使用 "-" 分隔
-        - 禁止未列出的偏好或自然语言改写
-- stay_time=分钟  
-    途经点停留时间，若路径中没有途经点或停留时间不影响排序，传入 stay_time=None
-
-重要约束：
-- 必须传入四个参数，不能新增参数名
-- 排序仅基于 RouteSearch 结果与 Notebook 中已存储信息
-- preference 若存在，必须严格符合枚举和组合规则
-
-示例调用：
-RouteRank[time="17:45",time_window=180,preference="时间最少-换乘最少",stay_time=20]
-
-无偏好示例：
+3. RouteRank[time=, time_window=, preference=, stay_time=]
+Description: rank candidate routes returned by RouteSearch and choose the optimal result.
+Required parameters:
+- time=HH:MM: reference time in 24-hour format.
+- time_window=minutes: if no time window exists, write time_window=None.
+- preference="...": allowed atomic preferences are shortest_time, lowest_cost, least_walking, fewest_transfers. If no preference exists, write preference=None. One or two atomic preferences may be joined with "|".
+- stay_time=minutes: if there is no relevant stay, write stay_time=None.
+Important constraints:
+- Exactly four parameters must be passed.
+- Ranking is based only on RouteSearch results and Notebook contents.
+- If preference exists, it must strictly follow the allowed enumeration and combination rules.
+Examples:
+RouteRank[time="17:45",time_window=180,preference="shortest_time|fewest_transfers",stay_time=20]
 RouteRank[time="17:45",time_window=None,preference=None,stay_time=None]
 
+4. NotebookWrite[label]
+Description: write a short labeled entry into Notebook. This must be called immediately after every CoordSearch, RouteSearch, and RouteRank call so Planner can see the stored data.
+Parameter:
+- label: a short description or tag for the stored data.
 
-(4)NotebookWrite[简短描述]:
-描述：在Notebook工具中写入一个带有简短描述的新数据条目。这个工具必须在每一次调用CoordSearch、RouteSearch和RouteRank这三个工具之后立即使用，只有存储在Notebook中的数据才能被Planner看到，所以你应该在每一次获取坐标、每一次规划路径和每一次对路径进行排名之后将搜索出来的信息都写入Notebook中。
-参数：简短描述-对存储数据的简短描述或标签。你不需要把所有的信息都写在描述里。你搜索的数据降自动存储到Notebook中
+5. Planner[query]
+Description: an intelligent planning tool that produces a detailed plan from the user request and Notebook contents.
+Parameter:
+- query: the user request and parsed parameters.
 
-(5) Planner[query]:
-描述：一个智能规划工具，根据用户输入和笔记本中存储的信息制作详细的计划。
-参数：
-query：用户输入的问题和解析的参数。
-例如：Planner[从深圳先进技术研究院到深圳大学的交通方式和路线]。
-你应该使用尽可能多的步骤来收集足够的信息以输入到Planner中。
+Important correction:
+- Thought contains only reasoning and analysis, never tool calls or action intent.
+- Action contains exactly one tool call in the form ToolName[arguments].
+- Each operation may call exactly one tool function once.
+- Strictly obey the single-step output rule.
 
-
-【重要修正】
-- Thought模块：只包含纯粹的思考过程、推理和分析，绝对不能包含任何工具调用或行动意图，不允许出现Action内容
-- Action模块：只包含纯粹的工具调用，格式为：工具名[参数]，仅有一次调用工具，
-- 每个操作只调用一个工具函数一次
-- 严格遵守单步骤输出规则
-
-
-Query: {query}scratchpad：{scratchpad}"""
+Query: {query} scratchpad: {scratchpad}"""
 zeroshot_react_agent_prompt = PromptTemplate(
                         input_variables=["query", "scratchpad"],
                         template=ZEROSHOT_REACT_INSTRUCTION,
                         )
 
-# PLANNER_INSTRUCTION = """你是一个熟练的路径规划助手，根据我提供的信息和查询，请给我一个详细的计划，包括起点、终点（如马鞍山信用社）、途经点数量、途经点顺序、出行人数、优先级策略(由换乘最少、费用最低、时间最短、步行最少组成，根据提供的数据和问题你按照什么方式选的方案就写什么，如果如果没有约束优先级策略，则写"-")、交通方式（没有指定的时候默认为TRANSIT）、到达时间、出发时间、步行时间，到达时间、时间类型（由约束条件中"到达"决定，true为到达，false为出发）、出行总时间，总距离、总步行时间、步行距离、换乘次数、总费用、计划描述（对提供的方案进行简单的总结，不需要很复杂的信息，不能脱离所给你的内容，如果是公共交通还需要描述一下坐的哪路车等信息）等细节，除了出行方式为CAR自驾之外，其他出行方式还需要编写每一段行程的具体信息。请注意，计划中的所有信息都应该来自所提供的数据，你必须严格遵循示例中给出的格式。此外，所有的信息都应该符合常识，符号"-"标识信息不需要或者没有。不存在途经点时采用示例1，存在时采用示例2。你是一个路径规划助手，必须严格遵循以下规则：
-# 1. **所有字段必须直接引用Notebook中的数据**，禁止推断或虚构
-# 2. 时间计算必须基于Notebook中的时间和换乘逻辑
-# ***** 示例1 不存在途经点且可适用打车和自驾*****
-# query：我要从马鞍山信用社打车前往沙井民营党工委参加一个紧急会议。就我一个人，希望能规划换乘最少（直达）的路线，车费最好控制在39元以内，必须晚上11点22分之前到达。
-# 推荐路线：
-# 起点：马鞍山信用社
-# 终点：沙井民营党工委
-# 途经点数量：0个
-# 途经点顺序：-
-# 出行人数：1人
-# 出发时间：22:50
-# 到达时间：23:22
-# 优先级策略：换乘最少
-# 交通方式：CAR_PICKUP
-# 总费用：39元
-# 时间类型：到达
-# 出行总时间：32分钟
-# 总距离：11.8公里
-# 步行时间：5分钟
-# 步行距离：0.8公里
-# 换乘次数：-
+PLANNER_INSTRUCTION = """You are a Shenzhen travel-planning assistant. Based on the provided information, generate a complete, detailed, and realistic travel plan.
 
-# 路径描述：
-# 1. 马鞍山信用社-> 沙井民营党工委 22:50-23:22 总时间32分钟，步行5分钟，步行距离0.8公里 总费用38元
-#    - 马鞍山信用社 -> 马鞍山街道 22:50-22:53 步行3分钟，步行距离0.5公里
-#    - 马鞍山街道 -> 沙井街道 22:53-23:20 打车27分钟，车程11公里，车费38元
-#    - 沙井街道 -> 沙井民营党工委 23:20-23:22 步行2分钟，步行距离0.3公里
+The trip may be:
+- a single segment: origin -> destination
+- two segments: origin -> via point -> stay -> destination
 
-# 计划描述：
-# 为确保准时参会，建议22:50从马鞍山信用社出发，步行3分钟至马鞍山街道打车点。乘坐出租车直达沙井街道，预计27分钟车程，车费约38元。最后步行2分钟即可到达沙井民营党工委。全程预计32分钟，无换乘，确保23:22前抵达。
+Follow the output format strictly. Do not omit fields and do not add new fields.
+Use "-" when a field does not need to be filled.
+Distance must be in meters. Time duration must use minutes and seconds.
+Allowed plan preferences are: shortest_walking, shortest_time, lowest_cost, fewest_transfers, shortest_distance. If the user does not specify one, treat it as no preference.
 
-# ***** 示例2 存在途经点且可以适用公交地铁*****
-# query：我们4个人要在下午16点35分从宝安中心站乘坐地铁前往桥塘路中，中途需要在3个地方停留：先到西头新村办点事，然后去南头检查站（关外）02接人，最后到松坪山总站取些东西。因为是深夜出行且带着物品，希望能提供换乘最少的地铁方案，车费控制在64元以内，请帮我规划一条合理的路线方案。
-# 推荐路线：
-# 起点：宝安中心站
-# 终点：桥塘路中
-# 途经点数量：3个
-# 途经点顺序：西头新村 -> 南头检查站（关外）02 -> 松坪山总站
-# 出行人数：4人
-# 出发时间：16:35（修正实际出发时间）
-# 到达时间：17:40（修正为合理总时长）
-# 优先级策略：换乘最少
-# 交通方式：SUBWAY
-# 总费用：48元（4人×12元）
-# 时间类型：出发
-# 出行总时间：65分钟
-# 总距离：28公里
-# 步行时间：25分钟
-# 步行距离：3公里
-# 换乘次数：2次
+Example output skeleton:
+Travel Plan:
+Route Summary: a brief summary of the route
+Detailed Steps:
+First leg: from **Origin** to **Via Point**
+  Step 1: from **Origin** walk to **Stop A**
+    Mode: walk
+    Distance: 100.0 meters
+    Estimated Time: 2 minutes 0 seconds
+    Start Time: 08:00:00
+    End Time: 08:02:00
+Second leg: stay at **Via Point** for 25 minutes, then continue to **Destination**
+...
+Plan Preference: fewest_transfers
+Departure Time: 08:00:00
+Arrival Time: 09:00:00
+Transfers: 2
+Total Travel Time: 60 minutes 0 seconds
+Estimated Cost: 8.0 yuan
+Total Walking Distance: 500.0 meters
+Total Cycling Distance: 0.0 meters
+Total Distance: 12000.0 meters
 
-# 路径描述：
-# 1.宝安中心站 → 西头新村 16:35-17:00 总时间25分钟，步行8分钟，步行距离1.2公里 费用3元/人
-#       - 宝安中心站 → 宝安中心地铁站 16:35-16:38 步行3分钟，步行距离0.3公里
-#       - 宝安中心地铁站→西乡站 16:38-16:50 乘坐5号线（赤湾方向）12分钟，距离6公里 费用3元
-#       - 西乡站 → 西头新村 16:50-17:00 步行5分钟，步行距离0.9公里
-# 2.西头新村 → 南头检查站（关外）02 17:00-17:30 总时间30分钟 步行5分钟，步行距离0.8公里 费用3元/人
-#       - 西头新村 → 西乡站 17:00-17:05 步行5分钟，步行距离0.8公里
-#       - 西乡站 → 南头检查站（关外）02 17:05-17:30 乘坐地铁5号线（赤湾方向）25分钟 距离8公里 费用3元
-# 3.南头检查站（关外）02 → 松坪山总站 17:30-17:50 总时间20分钟 步行5分钟，步行距离0.5公里 费用3元/人
-#       - 南头检查站（关外）02 → 南头检查站地铁站 17:30-17:35 步行5分钟，步行距离0.5公里
-#       - 南头检查站地铁站 → 松坪山总站 17:35-17:50 乘坐地铁12号线（左炮台东方向）15分钟 距离4公里 费用3元
-# 4.松坪山总站 → 桥塘路中 17:50-18:05 总时间15分钟，步行7分钟，步行距离0.5公里 费用3元/人
-#       - 松坪山总站 → 松坪山地铁站 17:50-17:52 步行2分钟，步行距离0.2公里
-#       - 松坪山地铁站 → 同乐南站 17:52-17:58 乘坐地铁12号线（海上田园东方向）6分钟 距离3公里 费用3元
-#       - 同乐南站 → 桥塘路中 17:58-18:05 步行5分钟，步行距离0.3公里
+Important constraints:
+1. Every step's start and end time must exactly match the collected information.
+2. Place names must exactly match the database records.
+3. Do not use tools, JSON, or function calls.
+4. Output only the final travel-plan text.
 
-# 计划描述：
-# 从宝安中心站乘地铁5号线至西乡站（步行至西头新村停留20分钟），返回5号线至南头检查站接人（停留15分钟），换乘12号线至松坪山总站取物（停留15分钟），最终乘12号线至同乐南站步行至桥塘路中。全程90分钟，换乘2次，人均费用12元（4人合计48元）
-# ***** 示例结束 *****
-# Given information: {text}
-# Query: {query}
-# Travel Plan:"""
-
-
-
-# PLANNER_INSTRUCTION = """
-# 你是一名深圳市的交通规划助手，根据我提供的信息，请给我制定一个详细的计划，包括起点、终点、途经点、出行方式等细节。
-# 您必须遵循示例中所给出的格式。此外，所有细节都应该符合常识。符号"-"表示信息不需要，距离单位都用米显示，时间单位用分钟和秒表示
-# 方案偏好可以选择：步行最短,时间最少,费用最低,换乘最少,距离最短,其中一种，如果用户没有明确提出方案偏好，则默认为无偏好
-# 请根据以下出行需求，直接给出你的最佳路线方案：
-# 请使用如下统一输出格式，必须包含每一个字段：
-
-# *****  示例  ****
-
-# 出行计划：
-# 路线描述：从南山科技园出发，先乘公交到深大地铁站，再乘地铁直达深圳北站，兼顾少步行、预算限制和孕妇出行需求。
-# 详细步骤：
-#    步骤 1：从 **南山科技园** 步行至 **科技园南公交站**
-#      出行方式：步行
-#      距离：150.10米
-#      预计时间：3分钟50秒
-#      开始时间：08:20:00
-#      结束时间：08:23:50
-#    步骤 2：在 **科技园南公交站** 乘 **M219 路公交** 前往 **深大**
-#      出行方式：公交
-#      距离：5000.00米
-#      预计时间：14分钟40秒
-#      开始时间：08:26:16
-#      结束时间：08:40:56
-#    步骤 3：在 **深大** 换乘 **地铁 1 号线** 前往 **深圳北站**
-#      出行方式：地铁
-#      距离：12000.32米
-#      预计时间：11分钟30秒
-#      开始时间：08:45:23
-#      结束时间：08:56:53
-#    步骤 4：从 **深圳北站地铁出口** 步行至 **深圳北站**
-#      出行方式：步行
-#      距离：200.52米
-#      预计时间：3分钟3秒
-#      开始时间：08:56:53  
-#      结束时间：08:59:59
-
-#    （按需继续  步骤 5，步骤 6 ...）
-
-# 方案偏好：换乘最少
-# 出发时间：08:20:00
-# 到达时间：08:59:59
-# 换乘次数：1次
-# 总出行时间：39分钟59秒
-# 预计费用：8 元
-# 总步行距离：350.62米
-# 骑行总距离：0.0 米
-# 总距离：17850.94米
-
-
-# ****  示例结束  ****
-# 注意：每个步骤中的开始时间和到达时间一定要跟搜集到的信息中保持一致，不能自己虚构,地名也需要保持一致，如："深大"属于地铁站，但是在我的数据库里面存的就是"深大",不可以写成"深大站"或者"深大地铁站"。
-# 请直接输出完整的出行计划文本，不要使用工具、JSON 或函数调用。
-# 搜集到的信息: {text}
-# 用户需求: {query}
-# 出行计划:
-# """
-PLANNER_INSTRUCTION = """
-你是一名深圳市的交通规划助手。请根据我提供的信息，为用户生成一份完整、详细、符合常识的出行计划。
-
-出行路径可能包含：
-- 单段路径（起点 → 终点）
-- 两段路径（起点 → 途经点 →【停留】→ 终点）
-
-你必须严格按照示例格式输出，禁止遗漏字段或新增字段。
-符号 "-" 表示该信息不需要填写。
-距离单位统一为 米，时间单位使用 分钟 和 秒。
-
-方案偏好可以选择：步行最短、时间最少、费用最低、换乘最少、距离最短。
-若用户未明确提出方案偏好，则默认为无偏好。
-
---------------------------------------------------
-示例
---------------------------------------------------
-
-出行计划：
-路线描述：对这一条路径的简短描述
-详细步骤：
-
-第一步：从 **鹏城花园二区** 前往 **李松蓢公交总站**
-  步骤 1：从 **鹏城花园二区** 步行至 **九尾岭隧道口**
-    出行方式：步行
-    距离：790.95米
-    预计时间：11分钟10秒
-    开始时间：16:28:00
-    结束时间：16:39:10
-  步骤 2：从 **九尾岭隧道口** 公交至 **爱联社区  351 建设路三岛中心总站-福宁总站**
-    出行方式：公交
-    距离：18198.56米
-    预计时间：58分钟6秒
-    开始时间：16:39:10
-    结束时间：17:37:16
-  步骤 3：从 **爱联社区** 步行至 **爱联地铁站**
-    出行方式：步行
-    距离：457.31米
-    预计时间：6分钟32秒
-    开始时间：17:37:16
-    结束时间：17:43:48
-  步骤 4：从 **爱联地铁站** 公交至 **松岗天虹商场  E33 龙岗同心总站-新和总站**
-    出行方式：公交
-    距离：41142.3米
-    预计时间：45分钟4秒
-    开始时间：17:43:48
-    结束时间：18:28:52
-  步骤 5：从 **松岗天虹商场** 步行至 **集信雅苑②**
-    出行方式：步行
-    距离：789.66米
-    预计时间：11分钟18秒
-    开始时间：18:28:52
-    结束时间：18:40:10
-  步骤 6：从 **集信雅苑②** 公交至 **通洲工业园  M248 潭头公交总站-天汇城首末站**
-    出行方式：公交
-    距离：6054.52米
-    预计时间：29分钟2秒
-    开始时间：18:52:00
-    结束时间：19:21:02
-  步骤 7：从 **通洲工业园** 步行至 **李松蓢公交总站**
-    出行方式：步行
-    距离：1243.43米
-    预计时间：17分钟33秒
-    开始时间：19:21:02
-    结束时间：19:38:35
-
-第二步：在 **李松蓢公交总站** 停留 25 分钟前往 **佳华新村**
-  步骤 1：从 **李松蓢公交总站** 步行至 **公明李松蓢场站**
-    出行方式：步行
-    距离：65.07米
-    预计时间：0分钟57秒
-    开始时间：20:03:35
-    结束时间：20:04:32
-  步骤 2：从 **公明李松蓢场站** 公交至 **松岗汽车站  655 公明李松蓢场站-新玉路庄村公交总站**
-    出行方式：公交
-    距离：12825.21米
-    预计时间：44分钟30秒
-    开始时间：20:04:32
-    结束时间：20:49:02
-  步骤 3：从 **松岗汽车站** 步行至 **松岗汽车站**
-    出行方式：步行
-    距离：129.0米
-    预计时间：1分钟56秒
-    开始时间：20:49:02
-    结束时间：20:50:58
-  步骤 4：从 **松岗汽车站** 公交至 **怀德公元  E13 松岗马田公交总站-火车站**
-    出行方式：公交
-    距离：11482.68米
-    预计时间：20分钟26秒
-    开始时间：20:50:58
-    结束时间：21:11:24
-  步骤 5：从 **怀德公元** 步行至 **福永桥底**
-    出行方式：步行
-    距离：661.0米
-    预计时间：9分钟26秒
-    开始时间：21:11:24
-    结束时间：21:20:50
-  步骤 6：从 **福永桥底** 公交至 **宝安客运中心  727 凤凰山公交综合场站-宝安客运中心**
-    出行方式：公交
-    距离：13459.48米
-    预计时间：64分钟33秒
-    开始时间：21:25:00
-    结束时间：22:29:33
-  步骤 7：从 **宝安客运中心** 步行至 **佳华新村**
-    出行方式：步行
-    距离：1621.47米
-    预计时间：23分钟2秒
-    开始时间：22:29:33
-    结束时间：22:52:35
-
-方案偏好：换乘最少
-出发时间：16:28:00
-到达时间：22:52:35
-换乘次数：5
-总出行时间：384分钟35秒
-预计费用：6.0 元
-总步行距离：3281.35米
-骑行总距离：0.0 米
-总距离：68676.73米
-
---------------------------------------------------
-重要约束
---------------------------------------------------
-1. 每个步骤的开始时间和结束时间必须与搜集到的信息完全一致，禁止虚构。
-2. 地点名称必须严格与数据库保持一致。
-3. 不得使用工具、JSON 或函数调用。
-4. 直接输出完整出行计划文本。
---------------------------------------------------
-
-搜集到的信息：
+Collected information:
 {text}
 
-用户需求：
+User request:
 {query}
 
-出行计划：
+Travel plan:
 """
-COT_PLANNER_INSTRUCTION = """
-你是一名深圳市的交通规划助手。请根据我提供的信息，为用户生成一份完整、详细、符合常识的出行计划。
+COT_PLANNER_INSTRUCTION = """You are a Shenzhen travel-planning assistant. Based on the provided information, generate a complete, detailed, and realistic travel plan.
 
-出行路径可能包含：
-- 单段路径（起点 → 终点）
-- 两段路径（起点 → 途经点 →【停留】→ 终点）
+The trip may be:
+- a single segment: origin -> destination
+- two segments: origin -> via point -> stay -> destination
 
-你必须严格按照示例格式输出，禁止遗漏字段或新增字段。
-符号 "-" 表示该信息不需要填写。
-距离单位统一为 米，时间单位使用 分钟 和 秒。
+Follow the output format strictly. Do not omit fields and do not add new fields.
+Use "-" when a field does not need to be filled.
+Distance must be in meters. Time duration must use minutes and seconds.
+Allowed plan preferences are: shortest_walking, shortest_time, lowest_cost, fewest_transfers, shortest_distance. If the user does not specify one, treat it as no preference.
 
-方案偏好可以选择：步行最短、时间最少、费用最低、换乘最少、距离最短。
-若用户未明确提出方案偏好，则默认为无偏好。
+Example output skeleton:
+Travel Plan:
+Route Summary: a brief summary of the route
+Detailed Steps:
+First leg: from **Origin** to **Via Point**
+  Step 1: from **Origin** walk to **Stop A**
+    Mode: walk
+    Distance: 100.0 meters
+    Estimated Time: 2 minutes 0 seconds
+    Start Time: 08:00:00
+    End Time: 08:02:00
+Second leg: stay at **Via Point** for 25 minutes, then continue to **Destination**
+...
+Plan Preference: fewest_transfers
+Departure Time: 08:00:00
+Arrival Time: 09:00:00
+Transfers: 2
+Total Travel Time: 60 minutes 0 seconds
+Estimated Cost: 8.0 yuan
+Total Walking Distance: 500.0 meters
+Total Cycling Distance: 0.0 meters
+Total Distance: 12000.0 meters
 
---------------------------------------------------
-示例
---------------------------------------------------
+Important constraints:
+1. Every step's start and end time must exactly match the collected information.
+2. Place names must exactly match the database records.
+3. Do not use tools, JSON, or function calls.
+4. Output only the final travel-plan text.
 
-出行计划：
-路线描述：对这一条路径的简短描述
-详细步骤：
-
-第一步：从 **鹏城花园二区** 前往 **李松蓢公交总站**
-  步骤 1：从 **鹏城花园二区** 步行至 **九尾岭隧道口**
-    出行方式：步行
-    距离：790.95米
-    预计时间：11分钟10秒
-    开始时间：16:28:00
-    结束时间：16:39:10
-  步骤 2：从 **九尾岭隧道口** 公交至 **爱联社区  351 建设路三岛中心总站-福宁总站**
-    出行方式：公交
-    距离：18198.56米
-    预计时间：58分钟6秒
-    开始时间：16:39:10
-    结束时间：17:37:16
-  步骤 3：从 **爱联社区** 步行至 **爱联地铁站**
-    出行方式：步行
-    距离：457.31米
-    预计时间：6分钟32秒
-    开始时间：17:37:16
-    结束时间：17:43:48
-  步骤 4：从 **爱联地铁站** 公交至 **松岗天虹商场  E33 龙岗同心总站-新和总站**
-    出行方式：公交
-    距离：41142.3米
-    预计时间：45分钟4秒
-    开始时间：17:43:48
-    结束时间：18:28:52
-  步骤 5：从 **松岗天虹商场** 步行至 **集信雅苑②**
-    出行方式：步行
-    距离：789.66米
-    预计时间：11分钟18秒
-    开始时间：18:28:52
-    结束时间：18:40:10
-  步骤 6：从 **集信雅苑②** 公交至 **通洲工业园  M248 潭头公交总站-天汇城首末站**
-    出行方式：公交
-    距离：6054.52米
-    预计时间：29分钟2秒
-    开始时间：18:52:00
-    结束时间：19:21:02
-  步骤 7：从 **通洲工业园** 步行至 **李松蓢公交总站**
-    出行方式：步行
-    距离：1243.43米
-    预计时间：17分钟33秒
-    开始时间：19:21:02
-    结束时间：19:38:35
-
-第二步：在 **李松蓢公交总站** 停留 25 分钟前往 **佳华新村**
-  步骤 1：从 **李松蓢公交总站** 步行至 **公明李松蓢场站**
-    出行方式：步行
-    距离：65.07米
-    预计时间：0分钟57秒
-    开始时间：20:03:35
-    结束时间：20:04:32
-  步骤 2：从 **公明李松蓢场站** 公交至 **松岗汽车站  655 公明李松蓢场站-新玉路庄村公交总站**
-    出行方式：公交
-    距离：12825.21米
-    预计时间：44分钟30秒
-    开始时间：20:04:32
-    结束时间：20:49:02
-  步骤 3：从 **松岗汽车站** 步行至 **松岗汽车站**
-    出行方式：步行
-    距离：129.0米
-    预计时间：1分钟56秒
-    开始时间：20:49:02
-    结束时间：20:50:58
-  步骤 4：从 **松岗汽车站** 公交至 **怀德公元  E13 松岗马田公交总站-火车站**
-    出行方式：公交
-    距离：11482.68米
-    预计时间：20分钟26秒
-    开始时间：20:50:58
-    结束时间：21:11:24
-  步骤 5：从 **怀德公元** 步行至 **福永桥底**
-    出行方式：步行
-    距离：661.0米
-    预计时间：9分钟26秒
-    开始时间：21:11:24
-    结束时间：21:20:50
-  步骤 6：从 **福永桥底** 公交至 **宝安客运中心  727 凤凰山公交综合场站-宝安客运中心**
-    出行方式：公交
-    距离：13459.48米
-    预计时间：64分钟33秒
-    开始时间：21:25:00
-    结束时间：22:29:33
-  步骤 7：从 **宝安客运中心** 步行至 **佳华新村**
-    出行方式：步行
-    距离：1621.47米
-    预计时间：23分钟2秒
-    开始时间：22:29:33
-    结束时间：22:52:35
-
-方案偏好：换乘最少
-出发时间：16:28:00
-到达时间：22:52:35
-换乘次数：5
-总出行时间：384分钟35秒
-预计费用：6.0 元
-总步行距离：3281.35米
-骑行总距离：0.0 米
-总距离：68676.73米
-
---------------------------------------------------
-重要约束
---------------------------------------------------
-1. 每个步骤的开始时间和结束时间必须与搜集到的信息完全一致，禁止虚构。
-2. 地点名称必须严格与数据库保持一致。
-3. 不得使用工具、JSON 或函数调用。
-4. 直接输出完整出行计划文本。
---------------------------------------------------
-
-搜集到的信息：
+Collected information:
 {text}
 
-用户需求：
+User request:
 {query}
 
-出行计划：
-让我们一步一步来思考。首先, """
+Travel plan:
+Let us think step by step. First, """
 
-# REACT_PLANNER_INSTRUCTION = """
-# 你是一名深圳市的交通规划助手。请根据我提供的信息，为用户生成一份完整、详细、符合常识的出行计划。
+REACT_PLANNER_INSTRUCTION = """You are a Shenzhen travel-planning assistant. Based on the provided information, generate a complete, detailed, and realistic travel plan.
 
-# 出行路径可能包含：
-# - 单段路径（起点 → 终点）
-# - 两段路径（起点 → 途经点 →【停留】→ 终点）
+The trip may be:
+- a single segment: origin -> destination
+- two segments: origin -> via point -> stay -> destination
 
-# 你必须严格按照示例格式输出，禁止遗漏字段或新增字段。
-# 符号 "-" 表示该信息不需要填写。
-# 距离单位统一为 米，时间单位使用 分钟 和 秒。
+Follow the output format strictly. Do not omit fields and do not add new fields.
+Use "-" when a field does not need to be filled.
+Distance must be in meters. Time duration must use minutes and seconds.
+Allowed plan preferences are: shortest_walking, shortest_time, lowest_cost, fewest_transfers, shortest_distance. If the user does not specify one, treat it as no preference.
 
-# 方案偏好可以选择：步行最短、时间最少、费用最低、换乘最少、距离最短。
-# 若用户未明确提出方案偏好，则默认为无偏好。
+You are using the ReAct framework:
+- Thought: reasoning only.
+- Action: exactly one tool call.
+- Observation: tool result.
 
-# 你正在使用 ReAct 思维框架,通过交替进行"Thought"、"Action"和"Observation" 这几个步骤来完成此任务。在“思考”阶段，需要对当前情况进行推理。在“行动”阶段，有 3 种种类型：
-# （1）LogicalJudgment[子计划]：此函数判断子计划的逻辑，您需要以 JSON 格式输入子计划内容。该子计划应涵盖完整的一段出行计划。将提供一个示例以供参考。
-# （2）PlanSummary[总结计划]：此功能会计算详细完整计划的明细，您需要以 JSON 格式输入总结的内容。将提供一个示例以供参考,如果存在两端行程,总的换乘次数等于每一段的换乘次数之和再加1。
-# （3）Finish[完整计划]：使用此功能来表示任务的完成。您必须提交一个完整的、最终的计划作为参数。
-# ***** 示例 ***** 
+Available actions:
+1. LogicalJudgment[subplan_json]
+Validate the logic of one complete segment of the trip.
+2. PlanSummary[summary_json]
+Summarize the final complete plan. If there are two trip segments, total transfers equal the sum of transfers in each segment plus one when the via-point stay creates the segment break.
+3. Finish[final_plan]
+Return the final complete plan.
 
-# 问题：我打算17:22从深圳市福田区福苑小学出发，先去山海湾，并在那里至少停留35分钟，然后再前往天虹商场（深圳松岗店）。因为带着小孩，希望换乘次数尽可能少，费用控制在6元以内。出行方式没有特别限制，怎么方便怎么来。\\n结构化参数为：{{"起点": "深圳市福田区福苑小学", "途经点数量": 1, "途经点": "山海湾", "停留时间": 35.0, "终点": "天虹商场(深圳松岗店)", "出发时间": "17:22", "时间窗口": 0, "出行方式": null, "约束条件": {{"出行偏好": "换乘最少", "环境约束": null, "个体约束": "小孩", "费用": 6}}}}
-# 你可以像这样调用 LogicalJudgment[{{"行程":{{"起点":"深圳市福田区福苑小学","终点":"山海湾"}},"步骤1":{{"起点":"深圳市福田区福苑小学","终点":"红树绿洲","出行方式":"步行","距离":"384.66米","预计时间":"5分钟44秒","开始时间":"17:44:07","结束时间":"17:49:51"}},"步骤2":{{"起点":"红树绿洲","终点":"皇岗中学","出行方式":"公交","线路信息":"60 福田保税区总站（新）-龙悦居公交总站","距离":"3235.47米","预计时间":"13分钟16秒","开始时间":"17:49:51","结束时间":"18:03:07"}},"步骤3":{{"起点":"皇岗中学","终点":"联合广场②","出行方式":"步行","距离":"972.41米","预计时间":"13分钟46秒","开始时间":"18:03:07","结束时间":"18:16:53"}},"步骤4":{{"起点":"联合广场②","终点":"大鹏中心①","出行方式":"公交","线路信息":"E26 福田交通枢纽公交场站-大鹏总站","距离":"45943.55米","预计时间":"95分钟49秒","开始时间":"18:28:41","结束时间":"20:04:30"}},"步骤5":{{"起点":"大鹏中心①","终点":"大鹏中心①","出行方式":"步行","距离":"142.94米","预计时间":"2分钟8秒","开始时间":"20:04:30","结束时间":"20:06:38"}},"步骤6":{{"起点":"大鹏中心①","终点":"山海湾","出行方式":"公交","线路信息":"B983 大鹏汽车站-云海山庄","距离":"4652.95米","预计时间":"12分钟22秒","开始时间":"20:14:54","结束时间":"20:27:16"}},"步骤7":{{"起点":"山海湾","终点":"山海湾","出行方式":"步行","距离":"51.08米","预计时间":"0分钟43秒","开始时间":"20:27:16","结束时间":"20:27:59"}}}}]
-# 你可以像这样调用 PlanSummary[{{"方案偏好":"换乘最少","出发时间":"17:44:07","到达时间":"20:27:59","换乘次数":6,"总出行时间":"163分钟52秒","预计费用":"6.0元","总步行距离":"1551.09米","骑行总距离":"0.0米","总距离":"55383.06米"}}]
-# 你可以像这样调用 Finish[出行计划：
-# 路线描述：对这一条路径的简短描述
-# 详细步骤
-# 第一步：从 **深圳市福田区福苑小学** 前往 **山海湾**
-#   步骤 1：从 **深圳市福田区福苑小学** 步行至 **红树绿洲**
-#     出行方式：步行
-#     距离：384.66米
-#     预计时间：5分钟44秒
-#     开始时间：17:44:07
-#     结束时间：17:49:51
-#   步骤 2：从 **红树绿洲** 公交至 **皇岗中学  60 福田保税区总站（新）-龙悦居公交总站**
-#     出行方式：公交
-#     距离：3235.47米
-#     预计时间：13分钟16秒
-#     开始时间：17:49:51
-#     结束时间：18:03:07
-#   步骤 3：从 **皇岗中学** 步行至 **联合广场②**
-#     出行方式：步行
-#     距离：972.41米
-#     预计时间：13分钟46秒
-#     开始时间：18:03:07
-#     结束时间：18:16:53
-#   步骤 4：从 **联合广场②** 公交至 **大鹏中心①  E26 福田交通枢纽公交场站-大鹏总站**
-#     出行方式：公交
-#     距离：45943.55米
-#     预计时间：95分钟49秒
-#     开始时间：18:28:41
-#     结束时间：20:04:30
-#   步骤 5：从 **大鹏中心①** 步行至 **大鹏中心①**
-#     出行方式：步行
-#     距离：142.94米
-#     预计时间：2分钟8秒
-#     开始时间：20:04:30
-#     结束时间：20:06:38
-#   步骤 6：从 **大鹏中心①** 公交至 **山海湾  B983 大鹏汽车站-云海山庄**
-#     出行方式：公交
-#     距离：4652.95米
-#     预计时间：12分钟22秒
-#     开始时间：20:14:54
-#     结束时间：20:27:16
-#   步骤 7：从 **山海湾** 步行至 **山海湾**
-#     出行方式：步行
-#     距离：51.08米
-#     预计时间：0分钟43秒
-#     开始时间：20:27:16
-#     结束时间：20:27:59
+You must use Finish to indicate completion. Each action may call only one function once.
 
-
-# 第二步：在 **山海湾** 停留 42 分钟前往 **天虹商场(深圳松岗店)**
-#   步骤 1：从 **山海湾** 公交至 **岭澳新村  B983 云海山庄-大鹏汽车站**
-#     出行方式：公交
-#     距离：4481.16米
-#     预计时间：11分钟39秒
-#     开始时间：21:10:44
-#     结束时间：21:22:23
-#   步骤 2：从 **岭澳新村** 步行至 **岭澳新村**
-#     出行方式：步行
-#     距离：30.56米
-#     预计时间：0分钟26秒
-#     开始时间：21:22:23
-#     结束时间：21:22:49
-#   步骤 3：从 **岭澳新村** 公交至 **双龙地铁站②  818 大鹏中心①-龙岗教苑总站**
-#     出行方式：公交
-#     距离：27374.44米
-#     预计时间：73分钟58秒
-#     开始时间：21:32:19
-#     结束时间：22:46:17
-#   步骤 4：从 **双龙地铁站②** 步行至 **双龙地铁站③**
-#     出行方式：步行
-#     距离：36.59米
-#     预计时间：0分钟31秒
-#     开始时间：22:46:17
-#     结束时间：22:46:48
-#   步骤 5：从 **双龙地铁站③** 公交至 **滨河华强天桥  E25 富坪总站-购物公园总站**
-#     出行方式：公交
-#     距离：34318.38米
-#     预计时间：60分钟5秒
-#     开始时间：22:50:34
-#     结束时间：23:50:29
-#   步骤 6：从 **滨河华强天桥** 公交至 **松岗天虹商场  E13 火车站-松岗马田公交总站**
-#     出行方式：公交
-#     距离：2650.0米
-#     预计时间：4分钟45秒
-#     开始时间：23:55:29
-#     结束时间：23:59:45
-#   步骤 7：从 **松岗天虹商场** 步行至 **天虹商场(深圳松岗店)**
-#     出行方式：步行
-#     距离：307.26米
-#     预计时间：6分钟5秒
-#     开始时间：23:59:45
-#     结束时间：00:05:50
-
-# 方案偏好：换乘最少
-# 出发时间：17:44:07
-# 到达时间：20:27:59
-# 换乘次数：2
-# 总出行时间：163分钟52秒
-# 预计费用：6.0 元
-# 总步行距离：1551.09米
-# 骑行总距离：0.0 米
-# 总距离：55383.06米]
-
-# ***** 示例结束 *****
-# 您必须使用Finish来表示您已经完成了任务。每个动作只调用一个函数一次。
-
-
-# 搜集到的信息：
-# {text}
-
-# 用户需求：
-# {query}{scratchpad}
-
-# """
-REACT_PLANNER_INSTRUCTION = """
-你是一名深圳市的交通规划助手。请根据我提供的信息，为用户生成一份完整、详细、符合常识的出行计划。
-
-出行路径可能包含：
-- 单段路径（起点 → 终点）
-- 两段路径（起点 → 途经点 →【停留】→ 终点）
-
-你必须严格按照示例格式输出，禁止遗漏字段或新增字段。
-符号 "-" 表示该信息不需要填写。
-距离单位统一为 米，时间单位使用 分钟 和 秒。
-
-方案偏好可以选择：步行最短、时间最少、费用最低、换乘最少、距离最短。
-若用户未明确提出方案偏好，则默认为无偏好。
-
-你正在使用 ReAct 思维框架,通过交替进行"Thought"、"Action"和"Observation" 这几个步骤来完成此任务。在“思考”阶段，需要对当前情况进行推理。在“行动”阶段，有 3 种种类型：
-（1）LogicalJudgment[子计划]：此函数判断子计划的逻辑，您需要以 JSON 格式输入子计划内容。该子计划应涵盖完整的一段出行计划。将提供一个示例以供参考。
-（2）PlanSummary[总结计划]：此功能会计算详细完整计划的明细，您需要以 JSON 格式输入总结的内容。将提供一个示例以供参考,如果存在两端行程,总的换乘次数等于每一段的换乘次数之和再加1。第一段的终点和第二段的起点一致也认为是停留一段时间办事,换一次换乘。
-（3）Finish[完整计划]：使用此功能来表示任务的完成。您必须提交一个完整的、最终的计划作为参数,需要注意换行处理,保证结果清晰可读。
-***** 示例 ***** 
-
-问题：我打算16:28从鹏城花园二区出发，先到李松蓢公交总站，并在那里至少停留25分钟，然后再前往佳华新村。全程只坐公交车，希望换乘次数尽可能少，费用控制在6元以内。\\n结构化参数为：{{"起点": "鹏城花园二区", "途经点数量": 1, "途经点": "李松蓢公交总站", "停留时间": 25.0, "终点": "佳华新村", "出发时间": "16:28", "时间窗口": 0, "出行方式": "公交车", "约束条件": {{"出行偏好": "换乘最少", "环境约束": null, "个体约束": null, "费用": 6}}}}
-
-你可以像这样调用 LogicalJudgment[{{"行程":{{"起点":"鹏城花园二区","终点":"李松蓢公交总站"}},"步骤1":{{"起点":"鹏城花园二区","终点":"九尾岭隧道口","出行方式":"步行","距离":"790.95米","预计时间":"11分钟10秒","开始时间":"16:28:00","结束时间":"16:39:10"}},"步骤2":{{"起点":"九尾岭隧道口","终点":"爱联社区","出行方式":"公交","线路信息":"351 建设路三岛中心总站-福宁总站","距离":"18198.56米","预计时间":"58分钟6秒","开始时间":"16:39:10","结束时间":"17:37:16"}},"步骤3":{{"起点":"爱联社区","终点":"爱联地铁站","出行方式":"步行","距离":"457.31米","预计时间":"6分钟32秒","开始时间":"17:37:16","结束时间":"17:43:48"}},"步骤4":{{"起点":"爱联地铁站","终点":"松岗天虹商场","出行方式":"公交","线路信息":"E33 龙岗同心总站-新和总站","距离":"41142.3米","预计时间":"45分钟4秒","开始时间":"17:43:48","结束时间":"18:28:52"}},"步骤5":{{"起点":"松岗天虹商场","终点":"集信雅苑②","出行方式":"步行","距离":"789.66米","预计时间":"11分钟18秒","开始时间":"18:28:52","结束时间":"18:40:10"}},"步骤6":{{"起点":"集信雅苑②","终点":"通洲工业园","出行方式":"公交","线路信息":"M248 潭头公交总站-天汇城首末站","距离":"6054.52米","预计时间":"29分钟2秒","开始时间":"18:52:00","结束时间":"19:21:02"}},"步骤7":{{"起点":"通洲工业园","终点":"李松蓢公交总站","出行方式":"步行","距离":"1243.43米","预计时间":"17分钟33秒","开始时间":"19:21:02","结束时间":"19:38:35"}}}}]
-当存在两段路径时你可以像这样调用 LogicalJudgment[{{"行程":{{"起点":"李松蓢公交总站","终点":"佳华新村"}},"步骤1":{{"起点":"李松蓢公交总站","终点":"公明李松蓢场站","出行方式":"步行","距离":"65.07米","预计时间":"0分钟57秒","开始时间":"20:03:35","结束时间":"20:04:32"}},"步骤2":{{"起点":"公明李松蓢场站","终点":"松岗汽车站","出行方式":"公交","线路信息":"655 公明李松蓢场站-新玉路庄村公交总站","距离":"12825.21米","预计时间":"44分钟30秒","开始时间":"20:04:32","结束时间":"20:49:02"}},"步骤3":{{"起点":"松岗汽车站","终点":"松岗汽车站","出行方式":"步行","距离":"129.0米","预计时间":"1分钟56秒","开始时间":"20:49:02","结束时间":"20:50:58"}},"步骤4":{{"起点":"松岗汽车站","终点":"怀德公元","出行方式":"公交","线路信息":"E13 松岗马田公交总站-火车站","距离":"11482.68米","预计时间":"20分钟26秒","开始时间":"20:50:58","结束时间":"21:11:24"}},"步骤5":{{"起点":"怀德公元","终点":"福永桥底","出行方式":"步行","距离":"661.0米","预计时间":"9分钟26秒","开始时间":"21:11:24","结束时间":"21:20:50"}},"步骤6":{{"起点":"福永桥底","终点":"宝安客运中心","出行方式":"公交","线路信息":"727 凤凰山公交综合场站-宝安客运中心","距离":"13459.48米","预计时间":"64分钟33秒","开始时间":"21:25:00","结束时间":"22:29:33"}},"步骤7":{{"起点":"宝安客运中心","终点":"佳华新村","出行方式":"步行","距离":"1621.47米","预计时间":"23分钟2秒","开始时间":"22:29:33","结束时间":"22:52:35"}}}}]
-
-你可以像这样调用 PlanSummary[{{"方案偏好":"换乘最少","出发时间":"16:28:00","到达时间":"22:52:35","换乘次数":5,"总出行时间":"384分钟35秒","预计费用":"6.0元","总步行距离":"3281.35米","骑行总距离":"0.0米","总距离":"68676.73米"}}]
-
-你可以像这样调用 Finish[出行计划：
-路线描述：对这一条路径的简短描述
-详细步骤：
-第一步：从 **鹏城花园二区** 前往 **李松蓢公交总站**
-  步骤 1：从 **鹏城花园二区** 步行至 **九尾岭隧道口**
-    出行方式：步行
-    距离：790.95米
-    预计时间：11分钟10秒
-    开始时间：16:28:00
-    结束时间：16:39:10
-  步骤 2：从 **九尾岭隧道口** 公交至 **爱联社区  351 建设路三岛中心总站-福宁总站**
-    出行方式：公交
-    距离：18198.56米
-    预计时间：58分钟6秒
-    开始时间：16:39:10
-    结束时间：17:37:16
-  步骤 3：从 **爱联社区** 步行至 **爱联地铁站**
-    出行方式：步行
-    距离：457.31米
-    预计时间：6分钟32秒
-    开始时间：17:37:16
-    结束时间：17:43:48
-  步骤 4：从 **爱联地铁站** 公交至 **松岗天虹商场  E33 龙岗同心总站-新和总站**
-    出行方式：公交
-    距离：41142.3米
-    预计时间：45分钟4秒
-    开始时间：17:43:48
-    结束时间：18:28:52
-  步骤 5：从 **松岗天虹商场** 步行至 **集信雅苑②**
-    出行方式：步行
-    距离：789.66米
-    预计时间：11分钟18秒
-    开始时间：18:28:52
-    结束时间：18:40:10
-  步骤 6：从 **集信雅苑②** 公交至 **通洲工业园  M248 潭头公交总站-天汇城首末站**
-    出行方式：公交
-    距离：6054.52米
-    预计时间：29分钟2秒
-    开始时间：18:52:00
-    结束时间：19:21:02
-  步骤 7：从 **通洲工业园** 步行至 **李松蓢公交总站**
-    出行方式：步行
-    距离：1243.43米
-    预计时间：17分钟33秒
-    开始时间：19:21:02
-    结束时间：19:38:35
-
-第二步：在 **李松蓢公交总站** 停留 25 分钟前往 **佳华新村**
-  步骤 1：从 **李松蓢公交总站** 步行至 **公明李松蓢场站**
-    出行方式：步行
-    距离：65.07米
-    预计时间：0分钟57秒
-    开始时间：20:03:35
-    结束时间：20:04:32
-  步骤 2：从 **公明李松蓢场站** 公交至 **松岗汽车站  655 公明李松蓢场站-新玉路庄村公交总站**
-    出行方式：公交
-    距离：12825.21米
-    预计时间：44分钟30秒
-    开始时间：20:04:32
-    结束时间：20:49:02
-  步骤 3：从 **松岗汽车站** 步行至 **松岗汽车站**
-    出行方式：步行
-    距离：129.0米
-    预计时间：1分钟56秒
-    开始时间：20:49:02
-    结束时间：20:50:58
-  步骤 4：从 **松岗汽车站** 公交至 **怀德公元  E13 松岗马田公交总站-火车站**
-    出行方式：公交
-    距离：11482.68米
-    预计时间：20分钟26秒
-    开始时间：20:50:58
-    结束时间：21:11:24
-  步骤 5：从 **怀德公元** 步行至 **福永桥底**
-    出行方式：步行
-    距离：661.0米
-    预计时间：9分钟26秒
-    开始时间：21:11:24
-    结束时间：21:20:50
-  步骤 6：从 **福永桥底** 公交至 **宝安客运中心  727 凤凰山公交综合场站-宝安客运中心**
-    出行方式：公交
-    距离：13459.48米
-    预计时间：64分钟33秒
-    开始时间：21:25:00
-    结束时间：22:29:33
-  步骤 7：从 **宝安客运中心** 步行至 **佳华新村**
-    出行方式：步行
-    距离：1621.47米
-    预计时间：23分钟2秒
-    开始时间：22:29:33
-    结束时间：22:52:35
-
-方案偏好：换乘最少
-出发时间：16:28:00
-到达时间：22:52:35
-换乘次数：5
-总出行时间：384分钟35秒
-预计费用：6.0 元
-总步行距离：3281.35米
-骑行总距离：0.0 米
-总距离：68676.73米]
-
-***** 示例结束 *****
-您必须使用Finish来表示您已经完成了任务。每个动作只调用一个函数一次。
-
-
-搜集到的信息：
+Collected information:
 {text}
 
-用户需求：
+User request:
 {query}{scratchpad}
-
 """
 
-REFLECTION_HEADER = '你以前曾试图给出一个子计划或者对计划的总结，但失败了。以下反思给出了一个建议，以避免像以前那样无法回答查询。使用它们来改进你正确规划的策略。'
-REFLECT_INSTRUCTION = """你是一个能够通过自我反思来改进的高级推理代理。您将获得一个之前的推理试验，在该试验中，您被提供了一个判断子计划逻辑、一个对所有计划进行总结逻辑，一个路径规划查询以给出计划和相关信息。只有时间、出行方式、地名逻辑包凭证正确，并且总结正确才能视为合理步骤。由于您用完了设定的推理步骤数量，所以未能创建计划。请用几句话诊断可能的失败原因，并制定一个新的、简洁的、高层次的计划，以避免同样的失败。请使用完整的句子。
-搜集到的信息: {text}
+REFLECTION_HEADER = 'You previously tried to provide a sub-plan or a plan summary but failed. The reflections below offer guidance to avoid the same failure. Use them to improve your strategy for producing a correct plan.'
+REFLECT_INSTRUCTION = """You are an advanced reasoning agent that can improve through self-reflection. You will be given a previous reasoning attempt in which you were asked to validate sub-plan logic, summarize the overall plan logic, and answer a route-planning query using the available information. A step is considered valid only if the timing, travel mode, and place-name logic are correct, and the summary is also correct. You failed to create the plan because you ran out of the allowed reasoning steps. Diagnose the likely causes of failure in a few sentences, then produce a new concise high-level plan that avoids the same failure. Use complete sentences.
+Collected information: {text}
 
-之前的判断:
-问题: {query}{scratchpad}
+Previous attempt:
+Question: {query}{scratchpad}
 
-反思:"""
+Reflection:"""
 
-REACT_REFLECT_PLANNER_INSTRUCTION = """
-你是一名深圳市的交通规划助手。请根据我提供的信息，为用户生成一份完整、详细、符合常识的出行计划。
+REACT_REFLECT_PLANNER_INSTRUCTION = """You are a Shenzhen travel-planning assistant. Based on the provided information, generate a complete, detailed, and realistic travel plan.
 
-出行路径可能包含：
-- 单段路径（起点 → 终点）
-- 两段路径（起点 → 途经点 →【停留】→ 终点）
+The trip may be:
+- a single segment: origin -> destination
+- two segments: origin -> via point -> stay -> destination
 
-你必须严格按照示例格式输出，禁止遗漏字段或新增字段。
-符号 "-" 表示该信息不需要填写。
-距离单位统一为 米，时间单位使用 分钟 和 秒。
+Follow the output format strictly. Do not omit fields and do not add new fields.
+Use "-" when a field does not need to be filled.
+Distance must be in meters. Time duration must use minutes and seconds.
+Allowed plan preferences are: shortest_walking, shortest_time, lowest_cost, fewest_transfers, shortest_distance. If the user does not specify one, treat it as no preference.
 
-方案偏好可以选择：步行最短、时间最少、费用最低、换乘最少、距离最短。
-若用户未明确提出方案偏好，则默认为无偏好。
+You are using the ReAct framework:
+- Thought: reasoning only.
+- Action: exactly one tool call.
+- Observation: tool result.
 
-你正在使用 ReAct 思维框架,通过交替进行"Thought"、"Action"和"Observation" 这几个步骤来完成此任务。在“思考”阶段，需要对当前情况进行推理。在“行动”阶段，有 3 种种类型：
-（1）LogicalJudgment[子计划]：此函数判断子计划的逻辑，您需要以 JSON 格式输入子计划内容。该子计划应涵盖完整的一段出行计划。将提供一个示例以供参考。
-（2）PlanSummary[总结计划]：此功能会计算详细完整计划的明细，您需要以 JSON 格式输入总结的内容。将提供一个示例以供参考,如果存在两端行程,总的换乘次数等于每一段的换乘次数之和再加1。第一段的终点和第二段的起点一致也认为是停留一段时间办事,换一次换乘。
-（3）Finish[完整计划]：使用此功能来表示任务的完成。您必须提交一个完整的、最终的计划作为参数,需要注意换行处理,保证结果清晰可读。
-***** 示例 ***** 
+Available actions:
+1. LogicalJudgment[subplan_json]
+Validate the logic of one complete segment of the trip.
+2. PlanSummary[summary_json]
+Summarize the final complete plan. If there are two trip segments, total transfers equal the sum of transfers in each segment plus one when the via-point stay creates the segment break.
+3. Finish[final_plan]
+Return the final complete plan.
 
-问题：我打算16:28从鹏城花园二区出发，先到李松蓢公交总站，并在那里至少停留25分钟，然后再前往佳华新村。全程只坐公交车，希望换乘次数尽可能少，费用控制在6元以内。\\n结构化参数为：{{"起点": "鹏城花园二区", "途经点数量": 1, "途经点": "李松蓢公交总站", "停留时间": 25.0, "终点": "佳华新村", "出发时间": "16:28", "时间窗口": 0, "出行方式": "公交车", "约束条件": {{"出行偏好": "换乘最少", "环境约束": null, "个体约束": null, "费用": 6}}}}
-
-你可以像这样调用 LogicalJudgment[{{"行程":{{"起点":"鹏城花园二区","终点":"李松蓢公交总站"}},"步骤1":{{"起点":"鹏城花园二区","终点":"九尾岭隧道口","出行方式":"步行","距离":"790.95米","预计时间":"11分钟10秒","开始时间":"16:28:00","结束时间":"16:39:10"}},"步骤2":{{"起点":"九尾岭隧道口","终点":"爱联社区","出行方式":"公交","线路信息":"351 建设路三岛中心总站-福宁总站","距离":"18198.56米","预计时间":"58分钟6秒","开始时间":"16:39:10","结束时间":"17:37:16"}},"步骤3":{{"起点":"爱联社区","终点":"爱联地铁站","出行方式":"步行","距离":"457.31米","预计时间":"6分钟32秒","开始时间":"17:37:16","结束时间":"17:43:48"}},"步骤4":{{"起点":"爱联地铁站","终点":"松岗天虹商场","出行方式":"公交","线路信息":"E33 龙岗同心总站-新和总站","距离":"41142.3米","预计时间":"45分钟4秒","开始时间":"17:43:48","结束时间":"18:28:52"}},"步骤5":{{"起点":"松岗天虹商场","终点":"集信雅苑②","出行方式":"步行","距离":"789.66米","预计时间":"11分钟18秒","开始时间":"18:28:52","结束时间":"18:40:10"}},"步骤6":{{"起点":"集信雅苑②","终点":"通洲工业园","出行方式":"公交","线路信息":"M248 潭头公交总站-天汇城首末站","距离":"6054.52米","预计时间":"29分钟2秒","开始时间":"18:52:00","结束时间":"19:21:02"}},"步骤7":{{"起点":"通洲工业园","终点":"李松蓢公交总站","出行方式":"步行","距离":"1243.43米","预计时间":"17分钟33秒","开始时间":"19:21:02","结束时间":"19:38:35"}}}}]
-当存在两段路径时你可以像这样调用 LogicalJudgment[{{"行程":{{"起点":"李松蓢公交总站","终点":"佳华新村"}},"步骤1":{{"起点":"李松蓢公交总站","终点":"公明李松蓢场站","出行方式":"步行","距离":"65.07米","预计时间":"0分钟57秒","开始时间":"20:03:35","结束时间":"20:04:32"}},"步骤2":{{"起点":"公明李松蓢场站","终点":"松岗汽车站","出行方式":"公交","线路信息":"655 公明李松蓢场站-新玉路庄村公交总站","距离":"12825.21米","预计时间":"44分钟30秒","开始时间":"20:04:32","结束时间":"20:49:02"}},"步骤3":{{"起点":"松岗汽车站","终点":"松岗汽车站","出行方式":"步行","距离":"129.0米","预计时间":"1分钟56秒","开始时间":"20:49:02","结束时间":"20:50:58"}},"步骤4":{{"起点":"松岗汽车站","终点":"怀德公元","出行方式":"公交","线路信息":"E13 松岗马田公交总站-火车站","距离":"11482.68米","预计时间":"20分钟26秒","开始时间":"20:50:58","结束时间":"21:11:24"}},"步骤5":{{"起点":"怀德公元","终点":"福永桥底","出行方式":"步行","距离":"661.0米","预计时间":"9分钟26秒","开始时间":"21:11:24","结束时间":"21:20:50"}},"步骤6":{{"起点":"福永桥底","终点":"宝安客运中心","出行方式":"公交","线路信息":"727 凤凰山公交综合场站-宝安客运中心","距离":"13459.48米","预计时间":"64分钟33秒","开始时间":"21:25:00","结束时间":"22:29:33"}},"步骤7":{{"起点":"宝安客运中心","终点":"佳华新村","出行方式":"步行","距离":"1621.47米","预计时间":"23分钟2秒","开始时间":"22:29:33","结束时间":"22:52:35"}}}}]
-
-你可以像这样调用 PlanSummary[{{"方案偏好":"换乘最少","出发时间":"16:28:00","到达时间":"22:52:35","换乘次数":5,"总出行时间":"384分钟35秒","预计费用":"6.0元","总步行距离":"3281.35米","骑行总距离":"0.0米","总距离":"68676.73米"}}]
-
-你可以像这样调用 Finish[出行计划：
-路线描述：对这一条路径的简短描述
-详细步骤：
-第一步：从 **鹏城花园二区** 前往 **李松蓢公交总站**
-  步骤 1：从 **鹏城花园二区** 步行至 **九尾岭隧道口**
-    出行方式：步行
-    距离：790.95米
-    预计时间：11分钟10秒
-    开始时间：16:28:00
-    结束时间：16:39:10
-  步骤 2：从 **九尾岭隧道口** 公交至 **爱联社区  351 建设路三岛中心总站-福宁总站**
-    出行方式：公交
-    距离：18198.56米
-    预计时间：58分钟6秒
-    开始时间：16:39:10
-    结束时间：17:37:16
-  步骤 3：从 **爱联社区** 步行至 **爱联地铁站**
-    出行方式：步行
-    距离：457.31米
-    预计时间：6分钟32秒
-    开始时间：17:37:16
-    结束时间：17:43:48
-  步骤 4：从 **爱联地铁站** 公交至 **松岗天虹商场  E33 龙岗同心总站-新和总站**
-    出行方式：公交
-    距离：41142.3米
-    预计时间：45分钟4秒
-    开始时间：17:43:48
-    结束时间：18:28:52
-  步骤 5：从 **松岗天虹商场** 步行至 **集信雅苑②**
-    出行方式：步行
-    距离：789.66米
-    预计时间：11分钟18秒
-    开始时间：18:28:52
-    结束时间：18:40:10
-  步骤 6：从 **集信雅苑②** 公交至 **通洲工业园  M248 潭头公交总站-天汇城首末站**
-    出行方式：公交
-    距离：6054.52米
-    预计时间：29分钟2秒
-    开始时间：18:52:00
-    结束时间：19:21:02
-  步骤 7：从 **通洲工业园** 步行至 **李松蓢公交总站**
-    出行方式：步行
-    距离：1243.43米
-    预计时间：17分钟33秒
-    开始时间：19:21:02
-    结束时间：19:38:35
-
-第二步：在 **李松蓢公交总站** 停留 25 分钟前往 **佳华新村**
-  步骤 1：从 **李松蓢公交总站** 步行至 **公明李松蓢场站**
-    出行方式：步行
-    距离：65.07米
-    预计时间：0分钟57秒
-    开始时间：20:03:35
-    结束时间：20:04:32
-  步骤 2：从 **公明李松蓢场站** 公交至 **松岗汽车站  655 公明李松蓢场站-新玉路庄村公交总站**
-    出行方式：公交
-    距离：12825.21米
-    预计时间：44分钟30秒
-    开始时间：20:04:32
-    结束时间：20:49:02
-  步骤 3：从 **松岗汽车站** 步行至 **松岗汽车站**
-    出行方式：步行
-    距离：129.0米
-    预计时间：1分钟56秒
-    开始时间：20:49:02
-    结束时间：20:50:58
-  步骤 4：从 **松岗汽车站** 公交至 **怀德公元  E13 松岗马田公交总站-火车站**
-    出行方式：公交
-    距离：11482.68米
-    预计时间：20分钟26秒
-    开始时间：20:50:58
-    结束时间：21:11:24
-  步骤 5：从 **怀德公元** 步行至 **福永桥底**
-    出行方式：步行
-    距离：661.0米
-    预计时间：9分钟26秒
-    开始时间：21:11:24
-    结束时间：21:20:50
-  步骤 6：从 **福永桥底** 公交至 **宝安客运中心  727 凤凰山公交综合场站-宝安客运中心**
-    出行方式：公交
-    距离：13459.48米
-    预计时间：64分钟33秒
-    开始时间：21:25:00
-    结束时间：22:29:33
-  步骤 7：从 **宝安客运中心** 步行至 **佳华新村**
-    出行方式：步行
-    距离：1621.47米
-    预计时间：23分钟2秒
-    开始时间：22:29:33
-    结束时间：22:52:35
-
-方案偏好：换乘最少
-出发时间：16:28:00
-到达时间：22:52:35
-换乘次数：5
-总出行时间：384分钟35秒
-预计费用：6.0 元
-总步行距离：3281.35米
-骑行总距离：0.0 米
-总距离：68676.73米]
-***** 示例结束 *****
-
+Use the following reflections to improve your reasoning:
 {reflections}
-您必须使用Finish来表示您已经完成了任务。
-每个动作只调用一个函数一次。您必须使用Finish来表示您已经完成了任务。每个动作只调用一个函数一次。
 
-搜集到的信息：
+You must use Finish to indicate completion. Each action may call only one function once.
+
+Collected information:
 {text}
 
-用户需求：
+User request:
 {query}{scratchpad}
-
 """
 
 planner_agent_prompt = PromptTemplate(
@@ -1747,339 +588,3 @@ react_reflect_planner_agent_prompt = PromptTemplate(
                         input_variables=["text", "query", "reflections", "scratchpad"],
                         template = REACT_REFLECT_PLANNER_INSTRUCTION,
                         )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#测试仅有LLM的规划能力
-DIRECT_TEST = """
-你是一名深圳市的交通规划助手，根据我提供的信息，请给我制定一个详细的计划，包括起点、终点、途经点、出行方式等细节。
-您必须遵循示例中所给出的格式。此外，所有细节都应该符合常识。符号"-"表示信息不需要，距离单位都用米显示
-
-方案偏好可以选择：步行最短,时间最少,费用最低,换乘最少,距离最短,其中一种，如果用户没有明确提出方案偏好，则默认为无偏好
-请根据以下出行需求，直接给出你的最佳路线方案：
-请使用如下统一输出格式，必须包含每一个字段：
-
-*****  示例  ****
-
-出行计划：
-路线描述：从南山科技园出发，先乘公交到深大地铁站，再乘地铁直达深圳北站，兼顾少步行、预算限制和孕妇出行需求。
-详细步骤：
-   步骤 1：从 **南山科技园** 步行至 **科技园南公交站**  
-     出行方式：步行  
-     距离：150米  
-     预计时间：3分钟  
-     开始时间：08:20  
-     结束时间：08:23
-   步骤 2：在 **科技园南公交站** 乘 **M219 路公交** 前往 **深大地铁站**  
-     出行方式：公交  
-     距离：5000米 
-     预计时间：15分钟  
-     开始时间：08:23  
-     结束时间：08:38
-   步骤 3：在 **深大地铁站** 换乘 **地铁 1 号线** 前往 **深圳北站**  
-     出行方式：地铁  
-     距离：12000米
-     预计时间：18分钟  
-     开始时间：08:38  
-     结束时间：08:56
-   步骤 4：从 **深圳北站地铁出口** 步行至 **深圳北站**  
-     出行方式：步行  
-     距离：200米  
-     预计时间：3分钟  
-     开始时间：08:56  
-     结束时间：08:59
-
-   （按需继续  步骤 5，步骤 6 ...）
-
-方案偏好：换乘最少
-出发时间：08:23  
-到达时间：08:59
-换乘次数：1次
-总出行时间：39分钟
-预计费用：8 元
-总步行距离：350米
-骑行总距离：0.0 米
-总距离：17850米
-
-****  示例结束  ****
-出行需求：{query}
-出行计划：
-"""
-
-COT_TEST = """
-你是一名深圳市的交通规划助手，根据我提供的信息，请给我制定一个详细的计划，包括起点、终点、途经点、出行方式等细节。
-您必须遵循示例中所给出的格式。此外，所有细节都应该符合常识。符号"-"表示信息不需要，距离单位都用米显示
-
-方案偏好可以选择：步行最短,时间最少,费用最低,换乘最少,距离最短,其中一种，如果用户没有明确提出方案偏好，则默认为无偏好
-请根据以下出行需求，直接给出你的最佳路线方案：
-请使用如下统一输出格式，必须包含每一个字段：
-
-*****  示例  ****
-出行计划：
-路线描述：从南山科技园出发，先乘公交到深大地铁站，再乘地铁直达深圳北站，兼顾少步行、预算限制和孕妇出行需求。
-详细步骤：
-   步骤 1：从 **南山科技园** 步行至 **科技园南公交站**  
-     出行方式：步行  
-     距离：150米  
-     预计时间：3分钟  
-     开始时间：08:20  
-     结束时间：08:23
-   步骤 2：在 **科技园南公交站** 乘 **M219 路公交** 前往 **深大地铁站**  
-     出行方式：公交  
-     距离：5000米 
-     预计时间：15分钟  
-     开始时间：08:23  
-     结束时间：08:38
-   步骤 3：在 **深大地铁站** 换乘 **地铁 1 号线** 前往 **深圳北站**  
-     出行方式：地铁  
-     距离：12000米
-     预计时间：18分钟  
-     开始时间：08:38  
-     结束时间：08:56
-   步骤 4：从 **深圳北站地铁出口** 步行至 **深圳北站**  
-     出行方式：步行  
-     距离：200米  
-     预计时间：3分钟  
-     开始时间：08:56  
-     结束时间：08:59
-
-   （按需继续  步骤 5，步骤 6 ...）
-
-方案偏好：换乘最少
-出发时间：08:23  
-到达时间：08:59
-换乘次数：1次
-总出行时间：39分钟
-预计费用：8 元
-总步行距离：350米
-骑行总距离：0.0 米
-总距离：17850米
-
-****  示例结束  ****
-出行需求：{query}
-出行计划：让我们一步一步来思考。首先,
-"""
-REACT_TEST = """
-你是一名深圳市的交通规划助手.
-请使用 ReAct 框架解决用户需求。
-
-格式如下：
-Thought: 你对需求的理解
-Thought: 列出关键字段，如起点、终点、时间、偏好等
-Thought: 构造若干不同出行方案并推理可行性
-Action: 假设你分析路线（无需真实工具）
-Observation: 返回你分析后的结论
-Thought: 根据观察结果选择最优方案
-Final Answer: 最终方案
-
-出行需求：{query}
-
-"""
-
-REFLECT_TEST = """
-你是一名深圳交通规划助手，请使用 Reflect（反思式）策略解决以下出行需求。
-
-整个过程分为三个阶段：
-
----------------------------------------
-【阶段 1：初次回答】
-- 根据用户需求，给出你认为的最佳路线方案。
-- 尽量合理，但不必完美。
-
----------------------------------------
-【阶段 2：自我反思】
-- 检查你在阶段 1 的回答是否存在问题。
-- 常见问题包括：
-  * 是否遗漏用户字段（起点、终点、方式、偏好等）？
-  * 是否忽略约束（时间、换乘、步行距离等）？
-  * 是否给出的线路不够优化？
-  * 是否可以提供更合理、详细或更用户友好的方案？
-- 用 3～6 条 bullet point 写出你的反思。
-
----------------------------------------
-【阶段 3：改进后的最终答案】
-- 基于反思重新生成一份更优路线方案。
-- 这一部分才是最终给用户的答案。
-
----------------------------------------
-
-出行需求：{query}
-"""
-
-
-NOT_TOOL_DIRECT = """
-你是一名深圳市的交通规划助手。请根据我提出的问题，为用户生成一份完整、详细、符合常识的出行计划。
-
-出行路径可能包含：
-- 单段路径（起点 → 终点）
-- 两段路径（起点 → 途经点 →【停留】→ 终点）
-
-你必须严格按照示例格式输出，禁止遗漏字段或新增字段。
-符号 "-" 表示该信息不需要填写。
-距离单位统一为 米，时间单位使用 分钟 和 秒。
-
-方案偏好可以选择：步行最短、时间最少、费用最低、换乘最少、距离最短。
-若用户未明确提出方案偏好，则默认为无偏好。
-
---------------------------------------------------
-示例
---------------------------------------------------
-
-出行计划：
-路线描述：对这一条路径的简短描述
-详细步骤：
-
-第一步：从 **深圳市福田区福苑小学** 前往 **山海湾**
-  步骤 1：从 **深圳市福田区福苑小学** 步行至 **红树绿洲**
-    出行方式：步行
-    距离：384.66米
-    预计时间：5分钟44秒
-    开始时间：17:44:07
-    结束时间：17:49:51
-  步骤 2：从 **红树绿洲** 公交至 **皇岗中学  60 福田保税区总站（新）-龙悦居公交总站**
-    出行方式：公交
-    距离：3235.47米
-    预计时间：13分钟16秒
-    开始时间：17:49:51
-    结束时间：18:03:07
-  步骤 3：从 **皇岗中学** 步行至 **联合广场②**
-    出行方式：步行
-    距离：972.41米
-    预计时间：13分钟46秒
-    开始时间：18:03:07
-    结束时间：18:16:53
-  步骤 4：从 **联合广场②** 公交至 **大鹏中心①  E26 福田交通枢纽公交场站-大鹏总站**
-    出行方式：公交
-    距离：45943.55米
-    预计时间：95分钟49秒
-    开始时间：18:28:41
-    结束时间：20:04:30
-  步骤 5：从 **大鹏中心①** 步行至 **大鹏中心①**
-    出行方式：步行
-    距离：142.94米
-    预计时间：2分钟8秒
-    开始时间：20:04:30
-    结束时间：20:06:38
-  步骤 6：从 **大鹏中心①** 公交至 **山海湾  B983 大鹏汽车站-云海山庄**
-    出行方式：公交
-    距离：4652.95米
-    预计时间：12分钟22秒
-    开始时间：20:14:54
-    结束时间：20:27:16
-  步骤 7：从 **山海湾** 步行至 **山海湾**
-    出行方式：步行
-    距离：51.08米
-    预计时间：0分钟43秒
-    开始时间：20:27:16
-    结束时间：20:27:59
-
-
-第二步：在 **山海湾** 停留 42 分钟前往 **天虹商场(深圳松岗店)**
-  步骤 1：从 **山海湾** 公交至 **岭澳新村  B983 云海山庄-大鹏汽车站**
-    出行方式：公交
-    距离：4481.16米
-    预计时间：11分钟39秒
-    开始时间：21:10:44
-    结束时间：21:22:23
-  步骤 2：从 **岭澳新村** 步行至 **岭澳新村**
-    出行方式：步行
-    距离：30.56米
-    预计时间：0分钟26秒
-    开始时间：21:22:23
-    结束时间：21:22:49
-  步骤 3：从 **岭澳新村** 公交至 **双龙地铁站②  818 大鹏中心①-龙岗教苑总站**
-    出行方式：公交
-    距离：27374.44米
-    预计时间：73分钟58秒
-    开始时间：21:32:19
-    结束时间：22:46:17
-  步骤 4：从 **双龙地铁站②** 步行至 **双龙地铁站③**
-    出行方式：步行
-    距离：36.59米
-    预计时间：0分钟31秒
-    开始时间：22:46:17
-    结束时间：22:46:48
-  步骤 5：从 **双龙地铁站③** 公交至 **滨河华强天桥  E25 富坪总站-购物公园总站**
-    出行方式：公交
-    距离：34318.38米
-    预计时间：80分钟55秒
-    开始时间：13:28:34
-    结束时间：14:49:29
-  步骤 6：从 **滨河华强天桥** 公交至 **松岗天虹商场  E13 火车站-松岗马田公交总站**
-    出行方式：公交
-    距离：42650.0米
-    预计时间：55分钟45秒
-    开始时间：15:13:00
-    结束时间：16:08:45
-  步骤 7：从 **松岗天虹商场** 步行至 **天虹商场(深圳松岗店)**
-    出行方式：步行
-    距离：307.26米
-    预计时间：4分钟33秒
-    开始时间：16:08:45
-    结束时间：16:13:18
-
-方案偏好：换乘最少
-出发时间：17:44:07
-到达时间：20:27:59
-换乘次数：2
-总出行时间：163分钟52秒
-预计费用：6.0 元
-总步行距离：1551.09米
-骑行总距离：0.0 米
-总距离：55383.06米
-
---------------------------------------------------
-重要约束
---------------------------------------------------
-1. 直接输出完整出行计划文本。
---------------------------------------------------
-
-
-用户需求：
-{query}
-
-出行计划：
-"""
-
-not_tool_direct = PromptTemplate(
-                        input_variables=["query"],
-                        template = NOT_TOOL_DIRECT,
-                        )
-
-
-# DIRECT_TEST_PROMPT = PromptTemplate(
-#     input_variables=["query"],
-#     template=DIRECT_TEST,
-# )
-
-# COT_TEST_PROMPT = PromptTemplate(
-#     input_variables=["query"],
-#     template=COT_TEST,
-# )
-
-
-# REACT_TEST_PROMPT = PromptTemplate(
-#     input_variables=["query"],
-#     template=REACT_TEST,
-# )
-
-# REFLECT_TEST_PROMPT = PromptTemplate(
-#     input_variables=["query"],
-#     template=REFLECT_TEST,
-# )
